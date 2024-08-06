@@ -24,14 +24,19 @@ class FluxParams:
     qkv_bias: bool
     guidance_embed: bool
 
+def zero_module(module):
+    for p in module.parameters():
+        nn.init.zeros_(p)
+    return module
 
-class Flux(nn.Module):
+
+class ControlNetFlux(nn.Module):
     """
     Transformer model for flow matching on sequences.
     """
     _supports_gradient_checkpointing = True
 
-    def __init__(self, params: FluxParams):
+    def __init__(self, params: FluxParams, controlnet_depth=2):
         super().__init__()
 
         self.params = params
@@ -63,23 +68,40 @@ class Flux(nn.Module):
                     mlp_ratio=params.mlp_ratio,
                     qkv_bias=params.qkv_bias,
                 )
-                for _ in range(params.depth)
+                for _ in range(controlnet_depth)
             ]
         )
 
-        self.single_blocks = nn.ModuleList(
-            [
-                SingleStreamBlock(self.hidden_size, self.num_heads, mlp_ratio=params.mlp_ratio)
-                for _ in range(params.depth_single_blocks)
-            ]
-        )
-
-        self.final_layer = LastLayer(self.hidden_size, 1, self.out_channels)
+        # add ControlNet blocks
+        self.controlnet_blocks = nn.ModuleList([])
+        for _ in range(controlnet_depth):
+            controlnet_block = nn.Linear(self.hidden_size, self.hidden_size)
+            controlnet_block = zero_module(controlnet_block)
+            self.controlnet_blocks.append(controlnet_block)
+        self.pos_embed_input = nn.Linear(self.in_channels, self.hidden_size, bias=True)
         self.gradient_checkpointing = False
+        self.input_hint_block = nn.Sequential(
+            nn.Conv2d(3, 16, 3, padding=1),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1, stride=2),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1, stride=2),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1),
+            nn.SiLU(),
+            nn.Conv2d(16, 16, 3, padding=1, stride=2),
+            nn.SiLU(),
+            zero_module(nn.Conv2d(16, 16, 3, padding=1))
+        )
 
     def _set_gradient_checkpointing(self, module, value=False):
         if hasattr(module, "gradient_checkpointing"):
             module.gradient_checkpointing = value
+
 
     @property
     def attn_processors(self):
@@ -138,11 +160,11 @@ class Flux(nn.Module):
         self,
         img: Tensor,
         img_ids: Tensor,
+        controlnet_cond: Tensor,
         txt: Tensor,
         txt_ids: Tensor,
         timesteps: Tensor,
         y: Tensor,
-        block_controlnet_hidden_states=None,
         guidance: Tensor | None = None,
     ) -> Tensor:
         if img.ndim != 3 or txt.ndim != 3:
@@ -150,6 +172,10 @@ class Flux(nn.Module):
 
         # running on sequences img
         img = self.img_in(img)
+        controlnet_cond = self.input_hint_block(controlnet_cond)
+        controlnet_cond = rearrange(controlnet_cond, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
+        controlnet_cond = self.pos_embed_input(controlnet_cond)
+        img = img + controlnet_condx
         vec = self.time_in(timestep_embedding(timesteps, 256))
         if self.params.guidance_embed:
             if guidance is None:
@@ -160,9 +186,10 @@ class Flux(nn.Module):
 
         ids = torch.cat((txt_ids, img_ids), dim=1)
         pe = self.pe_embedder(ids)
-        if block_controlnet_hidden_states is not None:
-            controlnet_depth = len(block_controlnet_hidden_states)
-        for index_block, block in enumerate(self.double_blocks):
+
+        block_res_samples = ()
+
+        for block in self.double_blocks:
             if self.training and self.gradient_checkpointing:
 
                 def create_custom_forward(module, return_dict=None):
@@ -184,34 +211,12 @@ class Flux(nn.Module):
                 )
             else:
                 img, txt = block(img=img, txt=txt, vec=vec, pe=pe)
-            # controlnet residual
-            if block_controlnet_hidden_states is not None:
-                img = img + block_controlnet_hidden_states[index_block % 2]
 
+            block_res_samples = block_res_samples + (img,)
 
-        img = torch.cat((txt, img), 1)
-        for block in self.single_blocks:
-            if self.training and self.gradient_checkpointing:
+        controlnet_block_res_samples = ()
+        for block_res_sample, controlnet_block in zip(block_res_samples, self.controlnet_blocks):
+            block_res_sample = controlnet_block(block_res_sample)
+            controlnet_block_res_samples = controlnet_block_res_samples + (block_res_sample,)
 
-                def create_custom_forward(module, return_dict=None):
-                    def custom_forward(*inputs):
-                        if return_dict is not None:
-                            return module(*inputs, return_dict=return_dict)
-                        else:
-                            return module(*inputs)
-
-                    return custom_forward
-
-                ckpt_kwargs: Dict[str, Any] = {"use_reentrant": False} if is_torch_version(">=", "1.11.0") else {}
-                encoder_hidden_states, hidden_states = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(block),
-                    img,
-                    vec,
-                    pe,
-                )
-            else:
-                img = block(img, vec=vec, pe=pe)
-        img = img[:, txt.shape[1] :, ...]
-
-        img = self.final_layer(img, vec)  # (N, T, patch_size ** 2 * out_channels)
-        return img
+        return controlnet_block_res_samples
