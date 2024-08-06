@@ -48,7 +48,10 @@ python3 demo_lora_inference.py \
 ### ControlNet (Inference)
 
 ```bash
-python3 demo_controlnet_inference.py --checkpoint dit.bin --control_image "input_image.jpg" --prompt "handsome man in the city"
+python3 demo_controlnet_inference.py \
+    --checkpoint dit.bin \
+    --control_image "input_image.jpg" \
+    --prompt "handsome man in the city"
 ```
 
 ## Near Updates
