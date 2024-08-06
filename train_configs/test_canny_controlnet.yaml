@@ -1,0 +1,25 @@
+model_name: "flux-dev"
+data_config:
+  train_batch_size: 4
+  num_workers: 4
+  img_size: 512
+  img_dir: images/
+report_to: wandb
+train_batch_size: 3
+output_dir: saves_canny/
+max_train_steps: 100000
+learning_rate: 2e-5
+lr_scheduler: constant
+lr_warmup_steps: 10
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 1e-8
+max_grad_norm: 1.0
+logging_dir: logs
+mixed_precision: "bf16"
+checkpointing_steps: 2500
+checkpoints_total_limit: 10
+tracker_project_name: canny_training
+resume_from_checkpoint: latest
+gradient_accumulation_steps: 2
