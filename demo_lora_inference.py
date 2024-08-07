@@ -16,7 +16,7 @@ from transformers import pipeline
 from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
-                       load_flow_model, load_t5, load_safetensors, load_flow_model_quintized)
+                       load_flow_model, load_t5, load_safetensors, load_flow_model_quintized, load_lora)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -34,15 +34,19 @@ def create_argparser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--checkpoint", type=str, required=True,
+        "--checkpoint", type=str, default=None,
         help="Path to the model checkpoint"
+    )
+    parser.add_argument(
+        "--repo_id", type=str, default=None,
+        help="lora repo id"
     )
     parser.add_argument(
         "--prompt", type=str, required=True,
         help="The input text prompt"
     )
     parser.add_argument(
-        "--rank", type=int, default=16,
+        "--rank", type=int, default=4,
         help="LoRa rank"
     )
     parser.add_argument(
@@ -79,6 +83,7 @@ def create_argparser():
 
 
 def main(args):
+    assert args.checkpoint is not None or args.repo_id is not None
     name = args.name
     offload = args.offload
     is_schnell = name == "flux-schnell"
@@ -93,11 +98,14 @@ def main(args):
         is_schnell=is_schnell,
     )
     lora_attn_procs = {}
-    if '.safetensors' in args.checkpoint:
-        checkpoint = load_safetensors(args.checkpoint)
-    else:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
-    
+    if args.checkpoint is not None:
+        if '.safetensors' in args.checkpoint:
+            checkpoint = load_safetensors(args.checkpoint)
+        else:
+            checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    elif args.repo_id is not None:
+        checkpoint = load_lora(args.repo_id)
+        
     for name, _ in model.attn_processors.items():
         lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
         lora_state_dict = {}
