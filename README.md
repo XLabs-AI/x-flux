@@ -1,46 +1,95 @@
-# FLUX - Finetuning scripts
-This repo provides training scripts for [Flux model](https://github.com/black-forest-labs/flux) by Black Forest Labs
+![FLUX Finetuning scripts](./assets/readme/dark/header-rev1.png)
 
+This repository provides training scripts for [Flux model](https://github.com/black-forest-labs/flux) by Black Forest Labs. <br/>
 [XLabs AI](https://github.com/XLabs-AI) team is happy to publish fune-tuning Flux scripts, including:
+
 - **LoRA** 🔥
 - **ControlNet** 🔥
 
-# Models
+# Training
 
-We trained **Canny ControlNet** and **LoRA** checkpoints for `FLUX.1 [dev]`
+We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
+Both of them are trained on 512x512 pictures, 1024x1024 is in progress.
 
-Below we list relevant links at HuggingFace, where you can download it:
-- 1
-- 2
+### LoRA
 
-# Requirements
-Make sure your dependencies align with our versions
+`<In progress>`
+
+### ControlNet
+
+`<In progress>`
+
+## Models
+
+We trained **Canny ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
+You can download them on HuggingFace:
+
+- [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
+- [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
+
+## Inference
+
+To test our checkpoints, use commands presented below.
+
+### LoRA
+
 ```bash
-pip install requirements.txt
-```
-# Training scripts
-
-### LoRA
-example
-
-### ControlNet
-example
-
-# Inference scripts
-To test our checkpoints, launch the following scripts:
-
-### LoRA
-
-```python
-python demo_lora_inference.py --checkpoint lora.bin —-width 1024 —-height 784 --prompt "A Chicano girl in a suit covered with bold tattoos and holding a vest pistol. Animatrix illustration style, beautiful woman, 25 years old, cool, future fantasy Cool fashion, turquoise & light orange ping curl hair, The backgr"
-```
-### ControlNet
-
-```python
-python demo_controlnet_inference.py --checkpoint controlnet.bin --control_image "input_image.jpg" --prompt "handsome man in the city"
+python3 demo_lora_inference.py \
+    --checkpoint dit.bin —-width 512 —-height 512 \
+    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
 ```
 
-# Near Updates
-We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more!
+![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
+### ControlNet (Canny)
+
+```bash
+python3 demo_controlnet_inference.py \
+    --checkpoint controlnet.safetensors \
+    --control_image "input_image.jpg" \
+    --prompt "a bright blue bird in the garden, natural photo cinematic, MM full HD"
+```
+
+![Example Picture 1](./assets/readme/examples/picture-1-rev1.png)
+
+```bash
+python3 demo_controlnet_inference.py \
+    --checkpoint controlnet.safetensors \
+    --control_image "input_image.jpg" \
+    --prompt "a dark evil mysterius house with ghosts, cinematic, MM full HD"
+```
+
+![Example Picture 2](./assets/readme/examples/picture-2-rev1.png)
+
+```bash
+python3 demo_controlnet_inference.py \
+    --checkpoint controlnet.safetensors \
+    --control_image "input_image.jpg" \
+    --prompt "a handsome viking man with white hair, cinematic, MM full HD"
+```
+
+![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
+
+```bash
+python3 demo_controlnet_inference.py \
+    --checkpoint controlnet.safetensors \
+    --control_image "input_image.jpg" \
+    --prompt "a oil painting woman sitting at chair and smiling, cinematic, MM full HD"
+```
+
+![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
+
+## Requirements
+
+Install our dependencies by running the following command:
+
+```bash
+pip3 install requirements.txt
+```
+
+## Near Updates
+
+We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more! <br/>
 Stay tuned with [XLabs AI](https://github.com/XLabs-AI) to see **IP-Adapters** for Flux.
+
+![Follow Our Updates](./assets/readme/dark/follow-cta-rev2.png)
