@@ -32,12 +32,12 @@ To test our checkpoints, launch the following scripts:
 ### LoRA
 
 ```python
-python demo_lora_inference.py --checkpoint dit.bin —-width 1024 —-height 784 --prompt "A Chicano girl in a suit covered with bold tattoos and holding a vest pistol. Animatrix illustration style, beautiful woman, 25 years old, cool, future fantasy Cool fashion, turquoise & light orange ping curl hair, The backgr"
+python demo_lora_inference.py --checkpoint lora.bin —-width 1024 —-height 784 --prompt "A Chicano girl in a suit covered with bold tattoos and holding a vest pistol. Animatrix illustration style, beautiful woman, 25 years old, cool, future fantasy Cool fashion, turquoise & light orange ping curl hair, The backgr"
 ```
 ### ControlNet
 
 ```python
-python demo_controlnet_inference.py --checkpoint dit.bin --control_image "input_image.jpg" --prompt "handsome man in the city"
+python demo_controlnet_inference.py --checkpoint controlnet.bin --control_image "input_image.jpg" --prompt "handsome man in the city"
 ```
 
 # Near Updates
