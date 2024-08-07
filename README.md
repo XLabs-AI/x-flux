@@ -13,11 +13,14 @@ Both of them are trained on 512x512 pictures, 1024x1024 is in progress.
 
 ### LoRA
 
-`<In progress>`
+```bash
+accelerate launch train_scripts/train_flux_lora_deepspeed.py --config "train_configs/test_lora.yaml"
+```
 
 ### ControlNet
-
-`<In progress>`
+```bash
+accelerate launch train_scripts/train_flux_deepspeed_controlnet.py --config "train_configs/test_canny_controlnet.yaml"
+```
 
 ## Models
 
