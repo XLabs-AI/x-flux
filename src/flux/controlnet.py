@@ -175,7 +175,7 @@ class ControlNetFlux(nn.Module):
         controlnet_cond = self.input_hint_block(controlnet_cond)
         controlnet_cond = rearrange(controlnet_cond, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
         controlnet_cond = self.pos_embed_input(controlnet_cond)
-        img = img + controlnet_condx
+        img = img + controlnet_cond
         vec = self.time_in(timestep_embedding(timesteps, 256))
         if self.params.guidance_embed:
             if guidance is None:

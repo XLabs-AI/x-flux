@@ -8,7 +8,7 @@ from einops import rearrange
 from image_datasets.canny_dataset import canny_processor, c_crop
 from src.flux.sampling import denoise_controlnet, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (load_ae, load_clip, load_t5,
-                           load_flow_model, load_controlnet)
+                           load_flow_model, load_controlnet, load_safetensors)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -80,11 +80,12 @@ def main(args):
         is_schnell=is_schnell,
     )
     model = model.to(torch_device)
-    checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
-    checkpoint2 = {}
-    for k in checkpoint1.keys():
-        checkpoint2[k[len('module.'):]] = checkpoint1[k]
-    controlnet.load_state_dict(checkpoint2, strict=False)
+    if '.safetensors' in args.checkpoint:
+        checkpoint1 = load_safetensors(args.checkpoint)
+    else:
+        checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
+
+    controlnet.load_state_dict(checkpoint1, strict=False)
 
     width = 16 * args.width // 16
     height = 16 * args.height // 16
@@ -93,8 +94,9 @@ def main(args):
         (width // 8) * (height // 8) // (16 * 16),
         shift=(not is_schnell),
     )
+    filename = os.path.basename(args.control_image)
     canny_processed = preprocess_canny_image(args.control_image, width, height)
-    canny_processed.save(os.path.join(args.output_dir, "canny_processed_input.png"))
+    canny_processed.save(os.path.join(args.output_dir, f"canny_processed_{filename}"))
     controlnet_cond = torch.from_numpy((np.array(canny_processed) / 127.5) - 1)
     controlnet_cond = controlnet_cond.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(torch_device)
 
@@ -118,7 +120,7 @@ def main(args):
     x1 = x.clamp(-1, 1)
     x1 = rearrange(x1[-1], "c h w -> h w c")
     output_img = Image.fromarray((127.5 * (x1 + 1.0)).cpu().byte().numpy())
-    output_path = os.path.join(args.output_dir, "controlnet_result.png")
+    output_path = os.path.join(args.output_dir, f"controlnet_result_{filename}")
     output_img.save(output_path)
 
 

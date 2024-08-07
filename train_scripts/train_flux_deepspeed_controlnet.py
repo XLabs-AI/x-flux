@@ -140,39 +140,6 @@ def main():
     first_epoch = 0
 
     # Potentially load in the weights and states from a previous save
-    if args.resume_from_checkpoint:
-        if args.resume_from_checkpoint != "latest":
-            path = os.path.basename(args.resume_from_checkpoint)
-        else:
-            # Get the most recent checkpoint
-            dirs = os.listdir(args.output_dir)
-            dirs = [d for d in dirs if d.startswith("checkpoint")]
-            dirs = sorted(dirs, key=lambda x: int(x.split("-")[1]))
-            path = dirs[-1] if len(dirs) > 0 else None
-
-        if path is None:
-            accelerator.print(
-                f"Checkpoint '{args.resume_from_checkpoint}' does not exist. Starting a new training run."
-            )
-            args.resume_from_checkpoint = None
-            initial_global_step = 0
-        else:
-            accelerator.print(f"Resuming from checkpoint {path}")
-            dit_state = torch.load(os.path.join(args.output_dir, path, 'dit.bin',))
-            dit_state2 = {}
-            for k in dit_state.keys():
-                dit_state2[k[len('module.'):]] = dit_state[k]
-            controlnet.load_state_dict(dit_state2)
-            optimizer_state = torch.load(os.path.join(args.output_dir, path, 'optimizer.bin'))
-            optimizer.load_state_dict()
-
-            global_step = int(path.split("-")[1])
-
-            initial_global_step = global_step
-            first_epoch = global_step // num_update_steps_per_epoch
-
-    else:
-        initial_global_step = 0
     controlnet, optimizer, _, lr_scheduler = accelerator.prepare(
         controlnet, optimizer, deepcopy(train_dataloader), lr_scheduler
     )
@@ -203,7 +170,32 @@ def main():
     logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
+    if args.resume_from_checkpoint:
+        if args.resume_from_checkpoint != "latest":
+            path = os.path.basename(args.resume_from_checkpoint)
+        else:
+            # Get the most recent checkpoint
+            dirs = os.listdir(args.output_dir)
+            dirs = [d for d in dirs if d.startswith("checkpoint")]
+            dirs = sorted(dirs, key=lambda x: int(x.split("-")[1]))
+            path = dirs[-1] if len(dirs) > 0 else None
 
+        if path is None:
+            accelerator.print(
+                f"Checkpoint '{args.resume_from_checkpoint}' does not exist. Starting a new training run."
+            )
+            args.resume_from_checkpoint = None
+            initial_global_step = 0
+        else:
+            accelerator.print(f"Resuming from checkpoint {path}")
+            accelerator.load_state(os.path.join(args.output_dir, path))
+            global_step = int(path.split("-")[1])
+
+            initial_global_step = global_step
+            first_epoch = global_step // num_update_steps_per_epoch
+
+    else:
+        initial_global_step = 0
     progress_bar = tqdm(
         range(0, args.max_train_steps),
         initial=initial_global_step,
@@ -299,13 +291,16 @@ def main():
                                     removing_checkpoint = os.path.join(args.output_dir, removing_checkpoint)
                                     shutil.rmtree(removing_checkpoint)
 
-                        save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
-                        if not os.path.exists(save_path):
-                            os.mkdir(save_path)
-                        torch.save(controlnet.state_dict(), os.path.join(save_path, 'dit.bin'))
-                        torch.save(optimizer.state_dict(), os.path.join(save_path, 'optimizer.bin'))
-                        #accelerator.save_state(save_path)
-                        logger.info(f"Saved state to {save_path}")
+                    save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
+                    #if not os.path.exists(save_path):
+                    #        os.mkdir(save_path)
+
+                    accelerator.save_state(save_path)
+                    unwrapped_model = accelerator.unwrap_model(controlnet)
+
+                    torch.save(unwrapped_model.state_dict(), os.path.join(save_path, 'controlnet.bin'))
+                    logger.info(f"Saved state to {save_path}")
+
 
             logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
             progress_bar.set_postfix(**logs)

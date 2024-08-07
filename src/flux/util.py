@@ -11,6 +11,14 @@ from .controlnet import ControlNetFlux
 from .modules.autoencoder import AutoEncoder, AutoEncoderParams
 from .modules.conditioner import HFEmbedder
 
+from safetensors import safe_open
+
+def load_safetensors(path):
+    tensors = {}
+    with safe_open(path, framework="pt", device="cpu") as f:
+        for key in f.keys():
+            tensors[key] = f.get_tensor(key)
+    return tensors
 
 @dataclass
 class ModelSpec:
