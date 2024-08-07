@@ -59,19 +59,25 @@ A `.json` file contains "caption" field with a text prompt.
 To test our checkpoints, use commands presented below.
 
 ### LoRA
+![Example Picture 1](./assets/readme/examples/picture-5-rev1.png)
+prompt: "A girl in a suit covered with bold tattoos and holding a vest pistol, beautiful woman, 25 years old, cool, future fantasy, turquoise & light orange ping curl hair"
+![Example Picture 2](./assets/readme/examples/picture-6-rev1.png)
+prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
 
 ```bash
 python3 demo_lora_inference.py \
     --repo_id XLabs-AI/flux-RealismLora \
-    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
+    --width 1024 --height 768
+    --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
+![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
 ## Low memory mode
 
 Use LoRA FP8 version based on [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) with `--offload` setting to achieve lower VRAM usage (22 GB):
 ```bash
 python3 demo_lora_inference.py \
     --repo_id XLabs-AI/flux-RealismLora \
-    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic" --offload --name flux-dev-fp8
+    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic" --offload --name flux-dev-fp8
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
