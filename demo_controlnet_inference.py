@@ -8,7 +8,7 @@ from einops import rearrange
 from image_datasets.canny_dataset import canny_processor, c_crop
 from src.flux.sampling import denoise_controlnet, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (load_ae, load_clip, load_t5,
-                           load_flow_model, load_controlnet)
+                           load_flow_model, load_controlnet, load_safetensors)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -80,7 +80,11 @@ def main(args):
         is_schnell=is_schnell,
     )
     model = model.to(torch_device)
-    checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
+    if '.safetensors' in args.checkpoint:
+        checkpoint1 = load_safetensors(args.checkpoint)
+    else:
+        checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
+
     controlnet.load_state_dict(checkpoint1, strict=False)
 
     width = 16 * args.width // 16
