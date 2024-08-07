@@ -42,7 +42,7 @@ def create_argparser():
         help="The input text prompt"
     )
     parser.add_argument(
-        "--rank", type=int, default=4,
+        "--rank", type=int, default=16,
         help="LoRa rank"
     )
     parser.add_argument(
