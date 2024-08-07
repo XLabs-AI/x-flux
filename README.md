@@ -66,6 +66,8 @@ python3 demo_lora_inference.py \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
 ```
 ## Low memory mode
+
+Use LoRA FP8 version based on [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) with `--offload` setting to achieve lower VRAM usage (22 GB):
 ```bash
 python3 demo_lora_inference.py \
     --repo_id XLabs-AI/flux-RealismLora \
