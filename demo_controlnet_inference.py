@@ -27,6 +27,11 @@ def create_argparser():
         help="Path to the model checkpoint"
     )
     parser.add_argument(
+        "--offload", type=bool,
+        default=False,
+        help="offload"
+    )
+    parser.add_argument(
         "--control_image", type=str, required=True,
         help="Path to the input image for control"
     )
@@ -68,6 +73,7 @@ def preprocess_canny_image(image_path: str, width: int = 512, height: int = 512)
 
 def main(args):
     name = "flux-dev"
+    offload = args.offload
     is_schnell = name == "flux-schnell"
     if not os.path.isdir(args.output_dir):
         os.makedirs(args.output_dir)
@@ -76,7 +82,7 @@ def main(args):
     model, ae, t5, clip, controlnet = get_models(
         name,
         device=torch_device,
-        offload=False,
+        offload=offload,
         is_schnell=is_schnell,
     )
     model = model.to(torch_device)
@@ -106,14 +112,29 @@ def main(args):
             1, height, width, device=torch_device,
             dtype=torch.bfloat16, seed=args.seed
         )
+        if offload:
+            t5, clip = t5.to(torch_device), clip.to(torch_device)
         inp_cond = prepare(t5=t5, clip=clip, img=x, prompt=args.prompt)
+
+        # offload TEs to CPU, load model to gpu
+        if offload:
+            t5, clip = t5.cpu(), clip.cpu()
+            torch.cuda.empty_cache()
+            model = model.to(torch_device)
+
         x = denoise_controlnet(
             model, **inp_cond,
             controlnet=controlnet,
             timesteps=timesteps,
             guidance=args.guidance,
-            controlnet_cond=controlnet_cond
+            controlnet_cond=controlnet_cond,
+            #weight_type=torch.bfloat16,
         )
+        if offload:
+            model.cpu()
+            torch.cuda.empty_cache()
+            ae.decoder.to(x.device)
+
         x = unpack(x.float(), height, width)
         x = ae.decode(x)
 
