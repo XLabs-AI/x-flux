@@ -16,13 +16,16 @@ from transformers import pipeline
 from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
-                       load_flow_model, load_t5, load_safetensors)
+                       load_flow_model, load_t5, load_safetensors, load_flow_model_quintized)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
     t5 = load_t5(device, max_length=256 if is_schnell else 512)
     clip = load_clip(device)
-    model = load_flow_model(name, device="cpu" if offload else device)
+    if 'fp8' in name:
+        model = load_flow_model_quintized(name, device="cpu" if offload else device)
+    else:
+        model = load_flow_model(name, device="cpu" if offload else device)
     ae = load_ae(name, device="cpu" if offload else device)
     return model, ae, t5, clip
 
@@ -41,6 +44,10 @@ def create_argparser():
     parser.add_argument(
         "--rank", type=int, default=4,
         help="LoRa rank"
+    )
+    parser.add_argument(
+        "--name", type=str, default="flux-dev",
+        help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
     )
     parser.add_argument(
         "--device", type=str, default="cuda",
@@ -72,7 +79,7 @@ def create_argparser():
 
 
 def main(args):
-    name = "flux-dev"
+    name = args.name
     offload = args.offload
     is_schnell = name == "flux-schnell"
     if not os.path.isdir(args.output_dir):
@@ -86,16 +93,21 @@ def main(args):
         is_schnell=is_schnell,
     )
     lora_attn_procs = {}
-    for name, _ in model.attn_processors.items():
-        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
-    model.set_attn_processor(lora_attn_procs)
-
     if '.safetensors' in args.checkpoint:
         checkpoint = load_safetensors(args.checkpoint)
     else:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
-    model.load_state_dict(checkpoint, strict=False)
-    model = model.to(torch_device)
+    
+    for name, _ in model.attn_processors.items():
+        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
+        lora_state_dict = {}
+        for k in checkpoint.keys():
+            if name in k:
+                lora_state_dict[k[len(name) + 1:]] = checkpoint[k]
+        lora_attn_procs[name].load_state_dict(lora_state_dict)
+        lora_attn_procs[name].to(torch_device)
+    model.set_attn_processor(lora_attn_procs)
+
 
     width = 16 * args.width // 16
     height = 16 * args.height // 16
