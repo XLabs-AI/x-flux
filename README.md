@@ -35,7 +35,7 @@ To test our checkpoints, use commands presented below.
 
 ```bash
 python3 demo_lora_inference.py \
-    --checkpoint dit.bin —-width 512 —-height 512 \
+    --checkpoint lora.bin \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
 ```
 
