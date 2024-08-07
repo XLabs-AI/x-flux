@@ -22,13 +22,13 @@ You can download them on HuggingFace:
 ### LoRA
 
 ```bash
-accelerate launch train_scripts/train_flux_lora_deepspeed.py --config "train_configs/test_lora.yaml"
+accelerate launch train_flux_lora_deepspeed.py --config "train_configs/test_lora.yaml"
 ```
 
 ### ControlNet
 
 ```bash
-accelerate launch train_scripts/train_flux_deepspeed_controlnet.py --config "train_configs/test_canny_controlnet.yaml"
+accelerate launch train_flux_deepspeed_controlnet.py --config "train_configs/test_canny_controlnet.yaml"
 ```
 
 ## Training Dataset
