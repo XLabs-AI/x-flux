@@ -117,6 +117,10 @@ Install our dependencies by running the following command:
 pip3 install requirements.txt
 ```
 
+## Models Licence
+
+Our models fall under the [FLUX.1 [dev] Non-Commercial License](https://github.com/black-forest-labs/flux/blob/main/model_licenses/LICENSE-FLUX1-dev) <br/> Our training and infer scripts under the Apache 2 License
+
 ## Near Updates
 
 We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more! <br/>
