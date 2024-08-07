@@ -132,7 +132,29 @@ def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download:
         missing, unexpected = model.load_state_dict(sd, strict=False, assign=True)
         print_load_warning(missing, unexpected)
     return model
+    
+def load_flow_model2(name: str, device: str | torch.device = "cuda", hf_download: bool = True):
+    # Loading Flux
+    print("Init model")
+    ckpt_path = configs[name].ckpt_path
+    if (
+        ckpt_path is None
+        and configs[name].repo_id is not None
+        and configs[name].repo_flow is not None
+        and hf_download
+    ):
+        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow.replace("sft", "safetensors"))
 
+    with torch.device("meta" if ckpt_path is not None else device):
+        model = Flux(configs[name].params)
+
+    if ckpt_path is not None:
+        print("Loading checkpoint")
+        # load_sft doesn't support torch.device
+        sd = load_sft(ckpt_path, device=str(device))
+        missing, unexpected = model.load_state_dict(sd, strict=False, assign=True)
+        print_load_warning(missing, unexpected)
+    return model
 
 def load_controlnet(name, device, transformer=None):
     with torch.device(device):
