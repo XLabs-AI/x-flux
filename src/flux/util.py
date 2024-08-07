@@ -147,6 +147,10 @@ def print_load_warning(missing: list[str], unexpected: list[str]) -> None:
     elif len(unexpected) > 0:
         print(f"Got {len(unexpected)} unexpected keys:\n\t" + "\n\t".join(unexpected))
 
+def load_lora(repo_id, checkpoint_name='lora.safetensors'):
+    ckpt_path = hf_hub_download(repo_id, checkpoint_name)
+    sd = load_sft(ckpt_path, device='cpu')
+    return sd
 
 def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download: bool = True):
     # Loading Flux
