@@ -65,7 +65,12 @@ python3 demo_lora_inference.py \
     --repo_id XLabs-AI/flux-RealismLora \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
 ```
-
+##Low memory mode
+```bash
+python3 demo_lora_inference.py \
+    --repo_id XLabs-AI/flux-RealismLora \
+    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic" --offload --name flux-dev-fp8"
+```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
 ### ControlNet (Canny)
