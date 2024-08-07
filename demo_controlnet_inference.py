@@ -27,9 +27,7 @@ def create_argparser():
         help="Path to the model checkpoint"
     )
     parser.add_argument(
-        "--offload", type=bool,
-        default=False,
-        help="offload"
+        "--offload", action='store_true', help="Offload model to CPU when not in use"
     )
     parser.add_argument(
         "--control_image", type=str, required=True,
@@ -137,6 +135,10 @@ def main(args):
 
         x = unpack(x.float(), height, width)
         x = ae.decode(x)
+
+        if args.offload:
+            ae.decoder.cpu()
+            torch.cuda.empty_cache()
 
     x1 = x.clamp(-1, 1)
     x1 = rearrange(x1[-1], "c h w -> h w c")
