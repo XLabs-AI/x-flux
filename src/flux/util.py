@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 
 import torch
+import json
 from einops import rearrange
 from huggingface_hub import hf_hub_download
 from safetensors.torch import load_file as load_sft
@@ -10,6 +11,7 @@ from .model import Flux, FluxParams
 from .controlnet import ControlNetFlux
 from .modules.autoencoder import AutoEncoder, AutoEncoderParams
 from .modules.conditioner import HFEmbedder
+from optimum.quanto import requantize
 
 from safetensors import safe_open
 
@@ -29,11 +31,13 @@ class ModelSpec:
     repo_id: str | None
     repo_flow: str | None
     repo_ae: str | None
+    repo_id_ae: str | None
 
 
 configs = {
     "flux-dev": ModelSpec(
         repo_id="black-forest-labs/FLUX.1-dev",
+        repo_id_ae="black-forest-labs/FLUX.1-dev",
         repo_flow="flux1-dev.safetensors",
         repo_ae="ae.safetensors",
         ckpt_path=os.getenv("FLUX_DEV"),
@@ -64,8 +68,42 @@ configs = {
             shift_factor=0.1159,
         ),
     ),
+    "flux-dev-fp8": ModelSpec(
+        repo_id="XLabs-AI/flux-dev-fp8",
+        repo_id_ae="black-forest-labs/FLUX.1-dev",
+        repo_flow="flux-dev-fp8.safetensors",
+        repo_ae="ae.safetensors",
+        ckpt_path=os.getenv("FLUX_DEV_FP8"),
+        params=FluxParams(
+            in_channels=64,
+            vec_in_dim=768,
+            context_in_dim=4096,
+            hidden_size=3072,
+            mlp_ratio=4.0,
+            num_heads=24,
+            depth=19,
+            depth_single_blocks=38,
+            axes_dim=[16, 56, 56],
+            theta=10_000,
+            qkv_bias=True,
+            guidance_embed=True,
+        ),
+        ae_path=os.getenv("AE"),
+        ae_params=AutoEncoderParams(
+            resolution=256,
+            in_channels=3,
+            ch=128,
+            out_ch=3,
+            ch_mult=[1, 2, 4, 4],
+            num_res_blocks=2,
+            z_channels=16,
+            scale_factor=0.3611,
+            shift_factor=0.1159,
+        ),
+    ),
     "flux-schnell": ModelSpec(
         repo_id="black-forest-labs/FLUX.1-schnell",
+        repo_id_ae="black-forest-labs/FLUX.1-dev",
         repo_flow="flux1-schnell.safetensors",
         repo_ae="ae.safetensors",
         ckpt_path=os.getenv("FLUX_SCHNELL"),
@@ -156,6 +194,30 @@ def load_flow_model2(name: str, device: str | torch.device = "cuda", hf_download
         print_load_warning(missing, unexpected)
     return model
 
+def load_flow_model_quintized(name: str, device: str | torch.device = "cuda", hf_download: bool = True):
+    # Loading Flux
+    print("Init model")
+    ckpt_path = configs[name].ckpt_path
+    if (
+        ckpt_path is None
+        and configs[name].repo_id is not None
+        and configs[name].repo_flow is not None
+        and hf_download
+    ):
+        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
+    json_path = hf_hub_download(configs[name].repo_id, 'flux_dev_quantization_map.json')
+
+
+    model = Flux(configs[name].params).to(torch.bfloat16)
+
+    print("Loading checkpoint")
+    # load_sft doesn't support torch.device
+    sd = load_sft(ckpt_path, device='cpu')
+    with open(json_path, "r") as f:
+        quantization_map = json.load(f)
+    requantize(model, sd, quantization_map, device=device)
+
+    return model
 def load_controlnet(name, device, transformer=None):
     with torch.device(device):
         controlnet = ControlNetFlux(configs[name].params)
@@ -180,7 +242,7 @@ def load_ae(name: str, device: str | torch.device = "cuda", hf_download: bool = 
         and configs[name].repo_ae is not None
         and hf_download
     ):
-        ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_ae)
+        ckpt_path = hf_hub_download(configs[name].repo_id_ae, configs[name].repo_ae)
 
     # Loading the autoencoder
     print("Init AE")
