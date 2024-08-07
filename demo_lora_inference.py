@@ -16,7 +16,7 @@ from transformers import pipeline
 from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
-                       load_flow_model, load_t5, load_safetensors, load_flow_model_quintized, load_lora)
+                       load_flow_model, load_t5, load_safetensors, load_flow_model_quintized, load_from_repo_id)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -34,24 +34,25 @@ def create_argparser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "--prompt", type=str, required=True,
+        help="The input text prompt"
+    )
+    parser.add_argument(
         "--checkpoint", type=str, default=None,
         help="Path to the model checkpoint"
     )
     parser.add_argument(
         "--repo_id", type=str, default=None,
-        help="lora repo id"
+        help="A HuggingFace repo id to download LoRA model"
     )
     parser.add_argument(
-        "--prompt", type=str, required=True,
-        help="The input text prompt"
-    )
-    parser.add_argument(
-        "--rank", type=int, default=4,
+        "--rank", type=int, default=16,
         help="LoRa rank"
     )
     parser.add_argument(
         "--name", type=str, default="flux-dev",
-        help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
+        choices=("flux-dev", "flux-dev-fp8", "flux-schnell"),
+        help="Model name to use (flux-dev, flux-dev-fp8, -flux-schnell)"
     )
     parser.add_argument(
         "--device", type=str, default="cuda",
@@ -83,7 +84,10 @@ def create_argparser():
 
 
 def main(args):
-    assert args.checkpoint is not None or args.repo_id is not None
+    if args.checkpoint is None and args.repo_id is None:
+        raise ValueError(
+            "You must specify either args.checkpoint or args.repo_id to load LoRA model"
+        )
     name = args.name
     offload = args.offload
     is_schnell = name == "flux-schnell"
@@ -104,8 +108,8 @@ def main(args):
         else:
             checkpoint = torch.load(args.checkpoint, map_location='cpu')
     elif args.repo_id is not None:
-        checkpoint = load_lora(args.repo_id)
-        
+        checkpoint = load_from_repo_id(args.repo_id, "lora.safetensors")
+
     for name, _ in model.attn_processors.items():
         lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
         lora_state_dict = {}

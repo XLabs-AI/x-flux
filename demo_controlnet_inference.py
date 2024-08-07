@@ -8,7 +8,7 @@ from einops import rearrange
 from image_datasets.canny_dataset import canny_processor, c_crop
 from src.flux.sampling import denoise_controlnet, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (load_ae, load_clip, load_t5,
-                           load_flow_model, load_controlnet, load_safetensors)
+                           load_flow_model, load_controlnet, load_safetensors, load_from_repo_id)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -23,16 +23,20 @@ def create_argparser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--checkpoint", type=str, required=True,
-        help="Path to the model checkpoint"
-    )
-    parser.add_argument(
         "--control_image", type=str, required=True,
         help="Path to the input image for control"
     )
     parser.add_argument(
         "--prompt", type=str, required=True,
         help="The input text prompt"
+    )
+    parser.add_argument(
+        "--checkpoint", type=str, default=None,
+        help="Path to the model checkpoint"
+    )
+    parser.add_argument(
+        "--repo_id", type=str, default=None,
+        help="A HuggingFace repo id to download ControlNet model"
     )
     parser.add_argument(
         "--device", type=str, default="cuda",
@@ -70,6 +74,10 @@ def preprocess_canny_image(image_path: str, width: int = 512, height: int = 512)
     return image
 
 def main(args):
+    if args.checkpoint is None and args.repo_id is None:
+        raise ValueError(
+            "You must specify either args.checkpoint or args.repo_id to load ControlNet model"
+        )
     name = "flux-dev"
     offload = args.offload
     is_schnell = name == "flux-schnell"
@@ -84,12 +92,15 @@ def main(args):
         is_schnell=is_schnell,
     )
     model = model.to(torch_device)
-    if '.safetensors' in args.checkpoint:
-        checkpoint1 = load_safetensors(args.checkpoint)
-    else:
-        checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
+    if args.checkpoint is not None:
+        if '.safetensors' in args.checkpoint:
+            checkpoint = load_safetensors(args.checkpoint)
+        else:
+            checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    elif args.repo_id is not None:
+        checkpoint = load_from_repo_id(args.repo_id, "controlnet.safetensors")
 
-    controlnet.load_state_dict(checkpoint1, strict=False)
+    controlnet.load_state_dict(checkpoint, strict=False)
 
     width = 16 * args.width // 16
     height = 16 * args.height // 16
