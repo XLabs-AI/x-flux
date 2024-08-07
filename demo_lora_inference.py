@@ -110,7 +110,8 @@ def main(args):
     x1 = x.clamp(-1, 1)
     x1 = rearrange(x1[-1], "c h w -> h w c")
     output_img = Image.fromarray((127.5 * (x1 + 1.0)).cpu().byte().numpy())
-    output_path = os.path.join(args.output_dir, "lora_result.png")
+    output_idx = len(os.listdir(args.output_dir)) + 1
+    output_path = os.path.join(args.output_dir, f"lora_result_{output_idx}.png")
     output_img.save(output_path)
 
 

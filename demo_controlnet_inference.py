@@ -93,8 +93,9 @@ def main(args):
         (width // 8) * (height // 8) // (16 * 16),
         shift=(not is_schnell),
     )
+    filename = os.path.basename(args.control_image)
     canny_processed = preprocess_canny_image(args.control_image, width, height)
-    canny_processed.save(os.path.join(args.output_dir, "canny_processed_input.png"))
+    canny_processed.save(os.path.join(args.output_dir, f"canny_processed_{filename}"))
     controlnet_cond = torch.from_numpy((np.array(canny_processed) / 127.5) - 1)
     controlnet_cond = controlnet_cond.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(torch_device)
 
@@ -118,7 +119,7 @@ def main(args):
     x1 = x.clamp(-1, 1)
     x1 = rearrange(x1[-1], "c h w -> h w c")
     output_img = Image.fromarray((127.5 * (x1 + 1.0)).cpu().byte().numpy())
-    output_path = os.path.join(args.output_dir, "controlnet_result.png")
+    output_path = os.path.join(args.output_dir, f"controlnet_result_{filename}")
     output_img.save(output_path)
 
 
