@@ -81,10 +81,7 @@ def main(args):
     )
     model = model.to(torch_device)
     checkpoint1 = torch.load(args.checkpoint, map_location='cpu')
-    checkpoint2 = {}
-    for k in checkpoint1.keys():
-        checkpoint2[k[len('module.'):]] = checkpoint1[k]
-    controlnet.load_state_dict(checkpoint2, strict=False)
+    controlnet.load_state_dict(checkpoint1, strict=False)
 
     width = 16 * args.width // 16
     height = 16 * args.height // 16
