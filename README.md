@@ -1,4 +1,4 @@
-![FLUX Finetuning scripts](./assets/dark/header-rev1.png)
+![FLUX Finetuning scripts](./assets/readme/dark/header-rev1.png)
 
 This repository provides training scripts for [Flux model](https://github.com/black-forest-labs/flux) by Black Forest Labs. <br/>
 [XLabs AI](https://github.com/XLabs-AI) team is happy to publish fune-tuning Flux scripts, including:
@@ -39,7 +39,7 @@ python3 demo_lora_inference.py \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. fantasy style, natural photo cinematic"
 ```
 
-![Example Picture 0](./assets/examples/picture-0-rev0.png)
+![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
 ### ControlNet (Canny)
 
@@ -50,7 +50,7 @@ python3 demo_controlnet_inference.py \
     --prompt "a bright blue bird in the garden, natural photo cinematic, MM full HD"
 ```
 
-![Example Picture 1](./assets/examples/picture-1-rev0.png)
+![Example Picture 1](./assets/readme/examples/picture-1-rev1.png)
 
 ```bash
 python3 demo_controlnet_inference.py \
@@ -59,7 +59,7 @@ python3 demo_controlnet_inference.py \
     --prompt "a dark evil mysterius house with ghosts, cinematic, MM full HD"
 ```
 
-![Example Picture 2](./assets/examples/picture-2-rev0.png)
+![Example Picture 2](./assets/readme/examples/picture-2-rev1.png)
 
 ```bash
 python3 demo_controlnet_inference.py \
@@ -68,7 +68,7 @@ python3 demo_controlnet_inference.py \
     --prompt "a handsome viking man with white hair, cinematic, MM full HD"
 ```
 
-![Example Picture 3](./assets/examples/picture-3-rev0.png)
+![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
 
 ```bash
 python3 demo_controlnet_inference.py \
@@ -77,7 +77,7 @@ python3 demo_controlnet_inference.py \
     --prompt "a oil painting woman sitting at chair and smiling, cinematic, MM full HD"
 ```
 
-![Example Picture 4](./assets/examples/picture-4-rev0.png)
+![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
 
 ## Requirements
 
@@ -89,6 +89,7 @@ pip3 install requirements.txt
 
 ## Near Updates
 
-We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more!
-
+We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more! <br/>
 Stay tuned with [XLabs AI](https://github.com/XLabs-AI) to see **IP-Adapters** for Flux.
+
+![Follow Our Updates](./assets/readme/dark/follow-cta-rev2.png)
