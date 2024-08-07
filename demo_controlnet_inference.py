@@ -27,9 +27,6 @@ def create_argparser():
         help="Path to the model checkpoint"
     )
     parser.add_argument(
-        "--offload", action='store_true', help="Offload model to CPU when not in use"
-    )
-    parser.add_argument(
         "--control_image", type=str, required=True,
         help="Path to the input image for control"
     )
@@ -40,6 +37,9 @@ def create_argparser():
     parser.add_argument(
         "--device", type=str, default="cuda",
         help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
+    )
+    parser.add_argument(
+        "--offload", action='store_true', help="Offload model to CPU when not in use"
     )
     parser.add_argument(
         "--output_dir", type=str, default="./controlnet_results/",

@@ -16,7 +16,7 @@ from transformers import pipeline
 from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
-                       load_flow_model, load_t5)
+                       load_flow_model, load_t5, load_safetensors)
 
 
 def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool):
@@ -47,6 +47,9 @@ def create_argparser():
         help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
     )
     parser.add_argument(
+        "--offload", action='store_true', help="Offload model to CPU when not in use"
+    )
+    parser.add_argument(
         "--output_dir", type=str, default="./lora_results/",
         help="The output directory where generation image is saved"
     )
@@ -70,6 +73,7 @@ def create_argparser():
 
 def main(args):
     name = "flux-dev"
+    offload = args.offload
     is_schnell = name == "flux-schnell"
     if not os.path.isdir(args.output_dir):
         os.makedirs(args.output_dir)
@@ -85,7 +89,12 @@ def main(args):
     for name, _ in model.attn_processors.items():
         lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
     model.set_attn_processor(lora_attn_procs)
-    model.load_state_dict(torch.load(args.checkpoint, map_location='cpu'), strict=False)
+
+    if '.safetensors' in args.checkpoint:
+        checkpoint = load_safetensors(args.checkpoint)
+    else:
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    model.load_state_dict(checkpoint, strict=False)
     model = model.to(torch_device)
 
     width = 16 * args.width // 16
@@ -102,10 +111,29 @@ def main(args):
             x.shape[-1] * x.shape[-2] // (16 * 16),
             shift=(not is_schnell),
         )
+        if offload:
+            t5, clip = t5.to(torch_device), clip.to(torch_device)
         inp_cond = prepare(t5=t5, clip=clip, img=x, prompt=args.prompt)
+
+         # offload TEs to CPU, load model to gpu
+        if offload:
+            t5, clip = t5.cpu(), clip.cpu()
+            torch.cuda.empty_cache()
+            model = model.to(torch_device)
+
         x = denoise(model, **inp_cond, timesteps=timesteps, guidance=args.guidance)
+
+        if offload:
+            model.cpu()
+            torch.cuda.empty_cache()
+            ae.decoder.to(x.device)
+
         x = unpack(x.float(), height, width)
         x = ae.decode(x)
+
+        if args.offload:
+            ae.decoder.cpu()
+            torch.cuda.empty_cache()
 
     x1 = x.clamp(-1, 1)
     x1 = rearrange(x1[-1], "c h w -> h w c")
