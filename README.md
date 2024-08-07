@@ -21,7 +21,7 @@ accelerate launch train_scripts/train_flux_lora_deepspeed.py --config "train_con
 ```bash
 accelerate launch train_scripts/train_flux_deepspeed_controlnet.py --config "train_configs/test_canny_controlnet.yaml"
 ```
-## Dataset forman
+## Dataset format
 Folder with images and jsons. Each json have "caption" field. <br/>
 Example: ["image1.jpg", "image1.json", "image2.jpg", "image2.json"]
 
