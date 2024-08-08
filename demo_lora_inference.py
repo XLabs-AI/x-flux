@@ -29,6 +29,10 @@ def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool)
     ae = load_ae(name, device="cpu" if offload else device)
     return model, ae, t5, clip
 
+def get_lora_rank(checkpoint):
+    for k in checkpoint.keys():
+        if k.endswith(".down.weight"):
+            return checkpoint[k].shape[0]
 
 def create_argparser():
     parser = argparse.ArgumentParser()
@@ -44,10 +48,6 @@ def create_argparser():
     parser.add_argument(
         "--repo_id", type=str, default=None,
         help="A HuggingFace repo id to download LoRA model"
-    )
-    parser.add_argument(
-        "--rank", type=int, default=16,
-        help="LoRa rank"
     )
     parser.add_argument(
         "--name", type=str, default="flux-dev",
@@ -101,7 +101,6 @@ def main(args):
         offload=False,
         is_schnell=is_schnell,
     )
-    lora_attn_procs = {}
     if args.checkpoint is not None:
         if '.safetensors' in args.checkpoint:
             checkpoint = load_safetensors(args.checkpoint)
@@ -110,8 +109,10 @@ def main(args):
     elif args.repo_id is not None:
         checkpoint = load_from_repo_id(args.repo_id, "lora.safetensors")
 
+    rank = get_lora_rank(checkpoint)
+    lora_attn_procs = {}
     for name, _ in model.attn_processors.items():
-        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
+        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=rank)
         lora_state_dict = {}
         for k in checkpoint.keys():
             if name in k:
