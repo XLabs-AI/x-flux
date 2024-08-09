@@ -124,7 +124,7 @@ python3 demo_controlnet_inference.py \
 Install our dependencies by running the following command:
 
 ```bash
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Accelerate Configuration Example
