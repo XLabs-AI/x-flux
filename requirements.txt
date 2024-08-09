@@ -7,3 +7,4 @@ optimum-quanto
 datasets
 omegaconf
 diffusers
+sentencepiece
