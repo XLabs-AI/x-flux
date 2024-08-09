@@ -39,6 +39,10 @@ def create_argparser():
         help="A HuggingFace repo id to download ControlNet model"
     )
     parser.add_argument(
+        "--filename", type=str, default="controlnet.safetensors",
+        help="A filename to download from HuggingFace"
+    )
+    parser.add_argument(
         "--device", type=str, default="cuda",
         help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
     )
@@ -98,7 +102,7 @@ def main(args):
         else:
             checkpoint = torch.load(args.checkpoint, map_location='cpu')
     elif args.repo_id is not None:
-        checkpoint = load_from_repo_id(args.repo_id, "controlnet.safetensors")
+        checkpoint = load_from_repo_id(args.repo_id, args.filename)
 
     controlnet.load_state_dict(checkpoint, strict=False)
 

@@ -55,6 +55,10 @@ def create_argparser():
         help="Model name to use (flux-dev, flux-dev-fp8, -flux-schnell)"
     )
     parser.add_argument(
+        "--filename", type=str, default="lora.safetensors",
+        help="A filename to download from HuggingFace"
+    )
+    parser.add_argument(
         "--device", type=str, default="cuda",
         help="Device to use (e.g. cpu, cuda:0, cuda:1, etc.)"
     )
@@ -107,7 +111,7 @@ def main(args):
         else:
             checkpoint = torch.load(args.checkpoint, map_location='cpu')
     elif args.repo_id is not None:
-        checkpoint = load_from_repo_id(args.repo_id, "lora.safetensors")
+        checkpoint = load_from_repo_id(args.repo_id, args.filename)
 
     rank = get_lora_rank(checkpoint)
     lora_attn_procs = {}
