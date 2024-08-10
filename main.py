@@ -66,7 +66,7 @@ def create_argparser():
         "--num_steps", type=int, default=50, help="The num_steps for diffusion process"
     )
     parser.add_argument(
-        "--guidance", type=float, default=4, help="The guidance for diffusion process"
+        "--guidance", type=float, default=3.5, help="The guidance for diffusion process"
     )
     parser.add_argument(
         "--seed", type=int, default=123456789, help="A seed for reproducible inference"
