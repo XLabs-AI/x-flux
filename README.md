@@ -18,7 +18,7 @@ You can download them on HuggingFace:
 
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
-- [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-lora-collection)
+- [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
 
 ### LoRA
 
