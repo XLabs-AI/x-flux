@@ -79,7 +79,7 @@ python3 main.py \
 ```bash
 python3 main.py \
     --use_lora --lora_weight 0.7 \
-    --width 1024 --height 768
+    --width 1024 --height 768 \
     --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
