@@ -49,7 +49,7 @@ def create_argparser():
         "--image", type=str, default=None, help="Path to image"
     )
     parser.add_argument(
-        "--lora_weight", type=float, default=0.7, help="Lora model strength (from 0 to 1.0)"
+        "--lora_weight", type=float, default=0.9, help="Lora model strength (from 0 to 1.0)"
     )
     parser.add_argument(
         "--model_type", type=str, default="flux-dev",
