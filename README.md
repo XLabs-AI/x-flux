@@ -18,6 +18,7 @@ You can download them on HuggingFace:
 
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
+- [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-lora-collection)
 
 ### LoRA
 
@@ -63,6 +64,17 @@ To test our checkpoints, use commands presented below.
 prompt: "A girl in a suit covered with bold tattoos and holding a vest pistol, beautiful woman, 25 years old, cool, future fantasy, turquoise & light orange ping curl hair"
 ![Example Picture 2](./assets/readme/examples/picture-6-rev1.png)
 prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
+
+
+```bash
+python3 main.py \
+--prompt "A cute corgi lives in a house made out of sushi, anime" \
+--lora_repo_id XLabs-AI/flux-lora-collection --lora_name anime_lora.safetensors \
+--device cuda --offload --use_lora --model_type flux-dev-fp8 --width 1024 --height 1024
+
+```
+![Example Picture 3](./assets/readme/examples/result_14.png)
+
 
 ```bash
 python3 main.py \
