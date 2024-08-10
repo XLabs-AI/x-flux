@@ -108,20 +108,18 @@ python3 main.py \
 
 ```bash
 python3 main.py \
-    --local_path controlnet.safetensors \
-    --use_controlnet \
-    --image "input_image.jpg" \
-    --prompt "a handsome viking man with white hair, cinematic, MM full HD"
+    --prompt="man, 4k photo" \
+    --repo_id "XLabs-AI/flux-controlnet-canny" \
+    --name controlnet.safetensors --device cuda:2 --offload --use_controlnet --image "input_image.jpg" --guidance 4
 ```
 
 ![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
 
 ```bash
 python3 main.py \
-    --local_path controlnet.safetensors \
-    --use_controlnet \
-    --image "input_image.jpg" \
-    --prompt "a oil painting woman sitting at chair and smiling, cinematic, MM full HD"
+    --prompt="a oil painting woman sitting at chair and smiling, cinematic, MM full HD" \
+    --repo_id "XLabs-AI/flux-controlnet-canny" \
+    --name controlnet.safetensors --device cuda:2 --offload --use_controlnet --image "input_image.jpg" --guidance 4
 ```
 
 ![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
