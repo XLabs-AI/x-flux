@@ -34,8 +34,8 @@ from diffusers.utils.hub_utils import load_or_create_model_card, populate_model_
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
 from einops import rearrange
-from .src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
-from .src.flux.util import (configs, load_ae, load_clip,
+from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
+from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_controlnet, load_t5)
 from image_datasets.canny_dataset import loader
 if is_wandb_available():
