@@ -80,6 +80,8 @@ python3 main.py \
 python3 main.py \
     --use_lora --lora_weight 0.7 \
     --width 1024 --height 768 \
+    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
+    --guidance 4 \
     --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
@@ -126,6 +128,8 @@ Use LoRA and Controlnet FP8 version based on [Flux-dev-F8](https://huggingface.c
 ```bash
 python3 main.py \
     --offload --name flux-dev-fp8 \
+    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
+    --guidance 4\
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
