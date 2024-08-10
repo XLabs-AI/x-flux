@@ -1,5 +1,6 @@
 import argparse
 from PIL import Image
+import os
 
 from src.flux.xflux_pipeline import XFluxPipeline
 
@@ -21,6 +22,14 @@ def create_argparser():
     )
     parser.add_argument(
         "--name", type=str, default=None,
+        help="A filename to download from HuggingFace"
+    )
+    parser.add_argument(
+        "--lora_repo_id", type=str, default=None,
+        help="A HuggingFace repo id to download model (Controlnet)"
+    )
+    parser.add_argument(
+        "--lora_name", type=str, default=None,
         help="A filename to download from HuggingFace"
     )
     parser.add_argument(
@@ -62,6 +71,9 @@ def create_argparser():
     parser.add_argument(
         "--seed", type=int, default=123456789, help="A seed for reproducible inference"
     )
+    parser.add_argument(
+        "--save_path", type=str, default='results', help="Path to save"
+    )
     return parser
 
 
@@ -73,7 +85,8 @@ def main(args):
 
     xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, args.seed)
     if args.use_lora:
-        xflux_pipeline.set_lora(None, "XLabs-AI/flux-RealismLora", "lora.safetensors", args.lora_weight)
+        print('load lora:', args.lora_repo_id, args.lora_name)
+        xflux_pipeline.set_lora(None, args.lora_repo_id, args.lora_name, args.lora_weight)
     if args.use_controlnet:
         xflux_pipeline.set_controlnet("canny", args.local_path, args.repo_id, args.name)
 
@@ -84,7 +97,10 @@ def main(args):
                             guidance=args.guidance,
                             num_steps=args.num_steps,
                             )
-    result.save(f"result.png")
+    if not os.path.exists(args.save_path):
+        os.mkdir(args.save_path)
+    ind = len(os.listdir(args.save_path))
+    result.save(os.path.join(args.save_path, f"result_{ind}.png"))
 
 
 if __name__ == "__main__":
