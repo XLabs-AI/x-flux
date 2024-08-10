@@ -65,59 +65,64 @@ prompt: "A girl in a suit covered with bold tattoos and holding a vest pistol, b
 prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
 
 ```bash
-python3 demo_lora_inference.py \
-    --repo_id XLabs-AI/flux-RealismLora \
+python3 main.py \
+    --use_lora --lora_weight 0.7 \
     --width 1024 --height 768
     --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
-## Low memory mode
-
-Use LoRA FP8 version based on [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) with `--offload` setting to achieve lower VRAM usage (22 GB):
-```bash
-python3 demo_lora_inference.py \
-    --repo_id XLabs-AI/flux-RealismLora \
-    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic" --offload --name flux-dev-fp8
-```
-![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
 ### ControlNet (Canny)
 
 ```bash
-python3 demo_controlnet_inference.py \
-    --checkpoint controlnet.safetensors \
-    --control_image "input_image.jpg" \
+python3 main.py \
+    --use_controlnet \
+    --local_path controlnet.safetensors \
+    --image "input_image.jpg" \
     --prompt "a bright blue bird in the garden, natural photo cinematic, MM full HD"
 ```
 
 ![Example Picture 1](./assets/readme/examples/picture-1-rev1.png)
 
 ```bash
-python3 demo_controlnet_inference.py \
-    --checkpoint controlnet.safetensors \
-    --control_image "input_image.jpg" \
+python3 main.py \
+    --local_path controlnet.safetensors \
+    --use_controlnet \
+    --image "input_image.jpg" \
     --prompt "a dark evil mysterius house with ghosts, cinematic, MM full HD"
 ```
 
 ![Example Picture 2](./assets/readme/examples/picture-2-rev1.png)
 
 ```bash
-python3 demo_controlnet_inference.py \
-    --checkpoint controlnet.safetensors \
-    --control_image "input_image.jpg" \
+python3 main.py \
+    --local_path controlnet.safetensors \
+    --use_controlnet \
+    --image "input_image.jpg" \
     --prompt "a handsome viking man with white hair, cinematic, MM full HD"
 ```
 
 ![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
 
 ```bash
-python3 demo_controlnet_inference.py \
-    --checkpoint controlnet.safetensors \
-    --control_image "input_image.jpg" \
+python3 main.py \
+    --local_path controlnet.safetensors \
+    --use_controlnet \
+    --image "input_image.jpg" \
     --prompt "a oil painting woman sitting at chair and smiling, cinematic, MM full HD"
 ```
 
 ![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
+
+## Low memory mode
+
+Use LoRA and Controlnet FP8 version based on [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) with `--offload` setting to achieve lower VRAM usage (22 GB) and `--name flux-dev-fp8`:
+```bash
+python3 main.py \
+    --offload --name flux-dev-fp8 \
+    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
+```
+![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
 ## Requirements
 
