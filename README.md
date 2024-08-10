@@ -129,7 +129,7 @@ Use LoRA and Controlnet FP8 version based on [Flux-dev-F8](https://huggingface.c
 python3 main.py \
     --offload --name flux-dev-fp8 \
     --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
-    --guidance 4\
+    --guidance 4 \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
