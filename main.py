@@ -86,7 +86,7 @@ def main(args):
     xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, args.seed)
     if args.use_lora:
         print('load lora:', args.lora_repo_id, args.lora_name)
-        xflux_pipeline.set_lora(None, args.lora_repo_id, args.lora_name, args.lora_weight)
+        xflux_pipeline.set_lora(args.local_path, args.lora_repo_id, args.lora_name, args.lora_weight)
     if args.use_controlnet:
         xflux_pipeline.set_controlnet("canny", args.local_path, args.repo_id, args.name)
 
