@@ -56,4 +56,4 @@ class CustomImageDataset(Dataset):
 
 def loader(train_batch_size, num_workers, **args):
     dataset = CustomImageDataset(**args)
-    return DataLoader(dataset, batch_size=train_batch_size, num_workers=num_workers)
+    return DataLoader(dataset, batch_size=train_batch_size, num_workers=num_workers, shuffle=True)
