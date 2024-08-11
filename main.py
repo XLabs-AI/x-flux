@@ -13,6 +13,10 @@ def create_argparser():
         help="The input text prompt"
     )
     parser.add_argument(
+        "--neg_prompt", type=str, default="",
+        help="The input text negative prompt"
+    )
+    parser.add_argument(
         "--local_path", type=str, default=None,
         help="Local path to the model checkpoint (Controlnet)"
     )
@@ -72,6 +76,12 @@ def create_argparser():
         "--seed", type=int, default=123456789, help="A seed for reproducible inference"
     )
     parser.add_argument(
+        "--true_gs", type=int, default=3, help="true guidance"
+    )
+    parser.add_argument(
+        "--timestep_to_start_cfg", type=int, default=100, help="timestep to start true guidance"
+    )
+    parser.add_argument(
         "--save_path", type=str, default='results', help="Path to save"
     )
     return parser
@@ -96,6 +106,9 @@ def main(args):
                             height=args.height,
                             guidance=args.guidance,
                             num_steps=args.num_steps,
+                            true_gs=args.true_gs,
+                            neg_prompt=args.neg_prompt,
+                            timestep_to_start_cfg=args.timestep_to_start_cfg,
                             )
     if not os.path.exists(args.save_path):
         os.mkdir(args.save_path)
