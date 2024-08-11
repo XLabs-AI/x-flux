@@ -136,10 +136,8 @@ def denoise(
                 guidance=guidance_vec,
             )     
             pred = neg_pred + true_gs * (pred - neg_pred)
-            print(true_gs)
         img = img + (t_prev - t_curr) * pred
         i += 1
-        print(2)
     return img
 
 def denoise_controlnet(
