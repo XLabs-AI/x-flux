@@ -81,7 +81,7 @@ def create_argparser():
         "--seed", type=int, default=123456789, help="A seed for reproducible inference"
     )
     parser.add_argument(
-        "--true_gs", type=int, default=3, help="true guidance"
+        "--true_gs", type=float, default=3, help="true guidance"
     )
     parser.add_argument(
         "--timestep_to_start_cfg", type=int, default=100, help="timestep to start true guidance"
