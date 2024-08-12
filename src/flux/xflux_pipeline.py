@@ -64,8 +64,7 @@ class XFluxPipeline:
         checkpoint = load_checkpoint(local_path, repo_id, name)
         self.controlnet.load_state_dict(checkpoint, strict=False)
 
-        self.control_type = control_type
-        self.annotator = Annotator()
+        self.annotator = Annotator(control_type, self.device)
         self.controlnet_loaded = True
 
     def __call__(self,
@@ -82,7 +81,7 @@ class XFluxPipeline:
         width = 16 * width // 16
         height = 16 * height // 16
         if self.controlnet_loaded:
-            controlnet_image = self.annotator(controlnet_image, width, height, self.control_type)
+            controlnet_image = self.annotator(controlnet_image, width, height)
             controlnet_image = torch.from_numpy((np.array(controlnet_image) / 127.5) - 1)
             controlnet_image = controlnet_image.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(self.device)
 

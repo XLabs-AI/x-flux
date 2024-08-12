@@ -16,6 +16,12 @@ from .model import Flux, FluxParams
 from .controlnet import ControlNetFlux
 from .modules.autoencoder import AutoEncoder, AutoEncoderParams
 from .modules.conditioner import HFEmbedder
+from .annotator.dwpose import DWposeDetector
+from .annotator.mlsd import MLSDdetector
+from .annotator.canny import CannyDetector
+from .annotator.midas import MidasDetector
+from .annotator.hed import HEDdetector
+from .annotator.tile import TileDetector
 
 
 def load_safetensors(path):
@@ -48,15 +54,6 @@ def load_checkpoint(local_path, repo_id, name):
     return checkpoint
 
 
-def canny_processor(image, low_threshold=100, high_threshold=200):
-    image = np.array(image)
-    image = cv2.Canny(image, low_threshold, high_threshold)
-    image = image[:, :, None]
-    image = np.concatenate([image, image, image], axis=2)
-    canny_image = Image.fromarray(image)
-    return canny_image
-
-
 def c_crop(image):
     width, height = image.size
     new_size = min(width, height)
@@ -66,16 +63,43 @@ def c_crop(image):
     bottom = (height + new_size) / 2
     return image.crop((left, top, right, bottom))
 
+
 class Annotator:
-    def __call__(self, image: Image, width: int, height: int, control_type: str):
+    def __init__(self, name: str, device: str):
+        if name == "canny":
+            processor = CannyDetector()
+        elif name == "openpose":
+            processor = DWposeDetector(device)
+        elif name == "depth":
+            processor = MidasDetector()
+        elif name == "hed":
+            processor = HEDdetector()
+        elif name == "hough":
+            processor = MLSDdetector()
+        elif name == "tile":
+            processor = TileDetector()
+        self.name = name
+        self.processor = processor
+
+    def __call__(self, image: Image, width: int, height: int):
         image = c_crop(image)
         image = image.resize((width, height))
-        if control_type == "canny":
-            image = canny_processor(image)
-            #image.save("canny_processed_tmp.png")
-            return image
+        image = np.array(image)
+        if self.name == "canny":
+            result = self.processor(image, low_threshold=100, high_threshold=200)
+        elif self.name == "hough":
+            result = self.processor(image, thr_v=0.05, thr_d=5)
+        elif self.name == "depth":
+            result = self.processor(image)
+            result, _ = result
         else:
-            raise ValueError("Only canny control_type is supported")
+            result = self.processor(image)
+
+        if result.ndim != 3:
+            result = result[:, :, None]
+            result = np.concatenate([result, result, result], axis=2)
+        return result
+
 
 @dataclass
 class ModelSpec:
