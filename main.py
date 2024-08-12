@@ -30,11 +30,11 @@ def create_argparser():
     )
     parser.add_argument(
         "--lora_repo_id", type=str, default=None,
-        help="A HuggingFace repo id to download model (Controlnet)"
+        help="A HuggingFace repo id to download model (LoRA)"
     )
     parser.add_argument(
         "--lora_name", type=str, default=None,
-        help="A filename to download from HuggingFace"
+        help="A LoRA filename to download from HuggingFace"
     )
     parser.add_argument(
         "--device", type=str, default="cuda",
@@ -54,6 +54,11 @@ def create_argparser():
     )
     parser.add_argument(
         "--lora_weight", type=float, default=0.9, help="Lora model strength (from 0 to 1.0)"
+    )
+    parser.add_argument(
+        "--control_type", type=str, default="canny",
+        choices=("canny", "openpose", "depth", "hed", "hough", "tile"),
+        help="Name of controlnet condition, example: canny"
     )
     parser.add_argument(
         "--model_type", type=str, default="flux-dev",
@@ -98,7 +103,7 @@ def main(args):
         print('load lora:', args.lora_repo_id, args.lora_name)
         xflux_pipeline.set_lora(None, args.lora_repo_id, args.lora_name, args.lora_weight)
     if args.use_controlnet:
-        xflux_pipeline.set_controlnet("canny", args.local_path, args.repo_id, args.name)
+        xflux_pipeline.set_controlnet(args.control_type, args.local_path, args.repo_id, args.name)
 
     result = xflux_pipeline(prompt=args.prompt,
                             controlnet_image=image,

@@ -103,7 +103,7 @@ python3 main.py \
 python3 main.py \
     --prompt="a bright blue bird in the garden, natural photo cinematic, MM full HD" \
     --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4
+    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
 ```
 ![Example Picture 1](./assets/readme/examples/picture-1-rev1.png)
 
@@ -111,7 +111,7 @@ python3 main.py \
 python3 main.py \
     --prompt="a dark evil mysterius house with ghosts, cinematic, MM full HD" \
     --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4
+    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
 ```
 ![Example Picture 2](./assets/readme/examples/picture-2-rev1.png)
 
@@ -119,7 +119,7 @@ python3 main.py \
 python3 main.py \
     --prompt="man, 4k photo" \
     --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4
+    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
 ```
 
 ![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
@@ -128,7 +128,7 @@ python3 main.py \
 python3 main.py \
     --prompt="a oil painting woman sitting at chair and smiling, cinematic, MM full HD" \
     --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4
+    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
 ```
 
 ![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
