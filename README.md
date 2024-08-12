@@ -19,6 +19,7 @@ You can download them on HuggingFace:
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
 - [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
+- [flux-furry-lora](https://huggingface.co/XLabs-AI/flux-furry-lora)
 
 ### LoRA
 
@@ -65,6 +66,16 @@ prompt: "A girl in a suit covered with bold tattoos and holding a vest pistol, b
 ![Example Picture 2](./assets/readme/examples/picture-6-rev1.png)
 prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
 
+```bash
+python3 main.py \
+ --prompt "Female furry Pixie with text 'hello world'" \
+ --lora_repo_id XLabs-AI/flux-furry-lora --lora_name furry_lora.safetensors --device cuda --offload --use_lora \
+ --model_type flux-dev-fp8 --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
+```
+
+![Example Picture 1](./assets/readme/examples/furry4.png)
 
 ```bash
 python3 main.py \
