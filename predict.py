@@ -115,9 +115,11 @@ class Predictor(BasePredictor):
             img.save(input_image)
 
         subprocess.check_call(
-            ["python3", "demo_controlnet_inference.py",
-            "--checkpoint", "controlnet.safetensors",
-            "--control_image", input_image,
+            ["python3", "main.py",
+            "--local_path", "controlnet.safetensors",
+            "--image", input_image,
+            "--use_controlnet",
+            "--control_type", "canny",
             "--prompt", prompt,
             "--width", str(width),
             "--height", str(height),
