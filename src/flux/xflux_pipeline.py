@@ -64,6 +64,10 @@ class XFluxPipeline:
         checkpoint = load_checkpoint(local_path, repo_id, name)
         self.controlnet.load_state_dict(checkpoint, strict=False)
 
+        if control_type == "depth":
+            self.controlnet_gs = 0.9
+        else:
+            self.controlnet_gs = 0.7
         self.annotator = Annotator(control_type, self.device)
         self.controlnet_loaded = True
 
@@ -117,7 +121,8 @@ class XFluxPipeline:
                     neg_txt=neg_inp_cond['txt'],
                     neg_txt_ids=neg_inp_cond['txt_ids'],
                     neg_vec=neg_inp_cond['vec'],
-                    true_gs=true_gs
+                    true_gs=true_gs,
+                    controlnet_gs=self.controlnet_gs,
                 )
             else:
                 x = denoise(self.model, **inp_cond, timesteps=timesteps, guidance=guidance,
