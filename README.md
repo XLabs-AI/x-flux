@@ -9,13 +9,14 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 # Training
 
 We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
-Both of them are trained on 512x512 pictures, 1024x1024 is in progress.
+It's available for 1024x1024 resolution!
 
 ## Models
 
-We trained **Canny ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
+We trained **Canny ControlNet**, **Depth ControlNet**, **HED ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
 You can download them on HuggingFace:
 
+- [flux-controlnet-collections](https://huggingface.co/XLabs-AI/flux-controlnet-collections)
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
 - [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
@@ -97,41 +98,81 @@ python3 main.py \
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
 
-### ControlNet (Canny)
+## Canny ControlNet
+```bash
+python3 main.py \
+ --prompt "a viking man with white hair looking, cinematic, MM full HD" \
+ --image input_image_canny.jpg \
+ --control_type canny \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-canny-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 768 --height 768 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
+```
+![Example Picture 1](./assets/readme/examples/canny_example_1.png?raw=true)
+
+## Depth ControlNet
+```bash
+python3 main.py \
+ --prompt "Photo of the bold man with beard and laptop, full hd, cinematic photo" \
+ --image input_image_depth1.jpg \
+ --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
+```
+![Example Picture 2](./assets/readme/examples/depth_example_1.png?raw=true)
 
 ```bash
 python3 main.py \
-    --prompt="a bright blue bird in the garden, natural photo cinematic, MM full HD" \
-    --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
+ --prompt "photo of handsome fluffy black dog standing on a forest path, full hd, cinematic photo" \
+ --image input_image_depth2.jpg \
+ --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
 ```
-![Example Picture 1](./assets/readme/examples/picture-1-rev1.png)
+![Example Picture 2](./assets/readme/examples/depth_example_2.png?raw=true)
 
 ```bash
 python3 main.py \
-    --prompt="a dark evil mysterius house with ghosts, cinematic, MM full HD" \
-    --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
+ --prompt "Photo of japanese village with houses and sakura, full hd, cinematic photo" \
+ --image input_image_depth3.webp \
+ --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
 ```
-![Example Picture 2](./assets/readme/examples/picture-2-rev1.png)
+![Example Picture 2](./assets/readme/examples/depth_example_3.png?raw=true)
+
+
+## HED ControlNet
+```bash
+python3 main.py \
+ --prompt "2d art of a sitting african rich woman, full hd, cinematic photo" \
+ --image input_image_hed1.jpg \
+ --control_type hed \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 768 --height 768 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
+```
+![Example Picture 2](./assets/readme/examples/hed_example_1.png?raw=true)
 
 ```bash
 python3 main.py \
-    --prompt="man, 4k photo" \
-    --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
+ --prompt "anime ghibli style art of a running happy white dog, full hd" \
+ --image input_image_hed2.jpg \
+ --control_type hed \
+ --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
+ --model_type flux-dev --width 768 --height 768 \
+ --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
+
 ```
-
-![Example Picture 3](./assets/readme/examples/picture-3-rev1.png)
-
-```bash
-python3 main.py \
-    --prompt="a oil painting woman sitting at chair and smiling, cinematic, MM full HD" \
-    --repo_id "XLabs-AI/flux-controlnet-canny" \
-    --name controlnet.safetensors --device cuda --offload --use_controlnet --image "input_image.jpg" --guidance 4 --control_type canny
-```
-
-![Example Picture 4](./assets/readme/examples/picture-4-rev1.png)
+![Example Picture 2](./assets/readme/examples/hed_example_2.png?raw=true)
 
 ## Low memory mode
 
