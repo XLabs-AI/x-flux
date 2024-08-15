@@ -2,6 +2,8 @@
 
 <a href='https://replicate.com/lucataco/flux-controlnet'><img src='https://replicate.com/lucataco/flux-controlnet/badge'></a>
 
+English / [中文](/README_zh.md)
+
 This repository provides training scripts for [Flux model](https://github.com/black-forest-labs/flux) by Black Forest Labs. <br/>
 [XLabs AI](https://github.com/XLabs-AI) team is happy to publish fune-tuning Flux scripts, including:
 
