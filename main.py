@@ -70,25 +70,25 @@ def create_argparser():
         help="Model type to use (flux-dev, flux-dev-fp8, flux-schnell)"
     )
     parser.add_argument(
-        "--width", type=int, default=512, help="The width for generated image"
+        "--width", type=int, default=1024, help="The width for generated image"
     )
     parser.add_argument(
-        "--height", type=int, default=512, help="The height for generated image"
+        "--height", type=int, default=1024, help="The height for generated image"
     )
     parser.add_argument(
-        "--num_steps", type=int, default=50, help="The num_steps for diffusion process"
+        "--num_steps", type=int, default=25, help="The num_steps for diffusion process"
     )
     parser.add_argument(
-        "--guidance", type=float, default=3.5, help="The guidance for diffusion process"
+        "--guidance", type=float, default=4, help="The guidance for diffusion process"
     )
     parser.add_argument(
         "--seed", type=int, default=123456789, help="A seed for reproducible inference"
     )
     parser.add_argument(
-        "--true_gs", type=float, default=3, help="true guidance"
+        "--true_gs", type=float, default=3.5, help="true guidance"
     )
     parser.add_argument(
-        "--timestep_to_start_cfg", type=int, default=100, help="timestep to start true guidance"
+        "--timestep_to_start_cfg", type=int, default=5, help="timestep to start true guidance"
     )
     parser.add_argument(
         "--save_path", type=str, default='results', help="Path to save"
@@ -104,9 +104,10 @@ def main(args):
 
     xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, args.seed)
     if args.use_lora:
-        print('load lora:', args.lora_repo_id, args.lora_name)
+        print('load lora:', args.lora_local_path, args.lora_repo_id, args.lora_name)
         xflux_pipeline.set_lora(args.lora_local_path, args.lora_repo_id, args.lora_name, args.lora_weight)
     if args.use_controlnet:
+        print('load controlnet:', args.local_path, args.repo_id, args.name)
         xflux_pipeline.set_controlnet(args.control_type, args.local_path, args.repo_id, args.name)
 
     result = xflux_pipeline(prompt=args.prompt,

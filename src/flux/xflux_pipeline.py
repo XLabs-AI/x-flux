@@ -85,6 +85,10 @@ class XFluxPipeline:
         width = 16 * width // 16
         height = 16 * height // 16
         if self.controlnet_loaded:
+            if width != height:
+                raise ValueError(
+                    f"Controlnet generates only squared images, must have width=height, but get {width}x{height}"
+                )
             controlnet_image = self.annotator(controlnet_image, width, height)
             controlnet_image = torch.from_numpy((np.array(controlnet_image) / 127.5) - 1)
             controlnet_image = controlnet_image.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(self.device)
