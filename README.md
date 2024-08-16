@@ -7,6 +7,12 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 
 - **LoRA** 🔥
 - **ControlNet** 🔥
+[<img src="https://github.com/XLabs-AI/x-flux/blob/main/assets/readme/light/join-our-discord-rev1.png?raw=true">](https://discord.gg/FHY2guThfy)
+
+# ComfyUI
+
+[See our github](https://github.com/XLabs-AI/x-flux-comfyui) for comfy ui workflows.
+![Example Picture 1](https://github.com/XLabs-AI/x-flux-comfyui/blob/main/assets/image1.png?raw=true)
 
 # Training
 
