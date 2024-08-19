@@ -19,6 +19,17 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
 It's available for 1024x1024 resolution!
 
+Install requirements by running the following command:
+```bash
+pip install -r dev_requirements.txt
+```
+
+HuggingFace CLI is required to download our models:
+```bash
+huggingface-cli login
+```
+
+
 ## Models
 
 We trained **Canny ControlNet**, **Depth ControlNet**, **HED ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
