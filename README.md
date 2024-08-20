@@ -17,7 +17,7 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 ## Requirements
 1. Python >= 3.10
 2. PyTorch >= 2.1
-
+3. HuggingFace CLI is required to download our models: ```huggingface-cli login```
 # Installation Guide
 1. Clone our repo:
 ```bash
@@ -32,6 +32,7 @@ source xflux_env/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+
 # Training
 
 We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
