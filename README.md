@@ -14,6 +14,20 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 [See our github](https://github.com/XLabs-AI/x-flux-comfyui) for comfy ui workflows.
 ![Example Picture 1](https://github.com/XLabs-AI/x-flux-comfyui/blob/main/assets/image1.png?raw=true)
 
+# Installation
+1. Clone our repo:
+```bash
+git clone https://github.com/XLabs-AI/x-flux.git
+```
+2. Create new virtual environment:
+```bash
+virtualenv xflux_env
+source xflux_env/bin/activate
+```
+3. Install our dependencies by running the following command:
+```bash
+pip install -r requirements.txt
+```
 # Training
 
 We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
@@ -193,14 +207,6 @@ python3 main.py \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
-
-## Requirements
-
-Install our dependencies by running the following command:
-
-```bash
-pip3 install -r requirements.txt
-```
 
 ## Accelerate Configuration Example
 
