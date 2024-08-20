@@ -14,14 +14,18 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 [See our github](https://github.com/XLabs-AI/x-flux-comfyui) for comfy ui workflows.
 ![Example Picture 1](https://github.com/XLabs-AI/x-flux-comfyui/blob/main/assets/image1.png?raw=true)
 
-# Installation
+## Requirements
+1. Python >= 3.10
+2. PyTorch >= 2.1
+
+# Installation Guide
 1. Clone our repo:
 ```bash
 git clone https://github.com/XLabs-AI/x-flux.git
 ```
 2. Create new virtual environment:
 ```bash
-virtualenv xflux_env
+python3 -m venv xflux_env
 source xflux_env/bin/activate
 ```
 3. Install our dependencies by running the following command:
