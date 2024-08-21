@@ -115,6 +115,9 @@ def main(args):
         xflux_pipeline.set_controlnet(args.control_type, args.local_path, args.repo_id, args.name)
 
     for _ in range(args.num_images_per_prompt):
+        args.seed = args.seed + 1
+        xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, args.seed)
+        
         result = xflux_pipeline(prompt=args.prompt,
                                 controlnet_image=image,
                                 width=args.width,
