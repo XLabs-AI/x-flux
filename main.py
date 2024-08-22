@@ -106,7 +106,7 @@ def main(args):
     else:
         image = None
 
-    xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, args.seed)
+    xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload)
     if args.use_lora:
         print('load lora:', args.lora_local_path, args.lora_repo_id, args.lora_name)
         xflux_pipeline.set_lora(args.lora_local_path, args.lora_repo_id, args.lora_name, args.lora_weight)
@@ -121,6 +121,7 @@ def main(args):
                                 height=args.height,
                                 guidance=args.guidance,
                                 num_steps=args.num_steps,
+                                seed=args.seed,
                                 true_gs=args.true_gs,
                                 neg_prompt=args.neg_prompt,
                                 timestep_to_start_cfg=args.timestep_to_start_cfg,
@@ -129,6 +130,7 @@ def main(args):
             os.mkdir(args.save_path)
         ind = len(os.listdir(args.save_path))
         result.save(os.path.join(args.save_path, f"result_{ind}.png"))
+        args.seed = args.seed + 1
 
 
 if __name__ == "__main__":

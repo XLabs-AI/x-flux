@@ -11,10 +11,9 @@ from src.flux.util import (load_ae, load_clip, load_flow_model, load_t5, load_co
 
 
 class XFluxPipeline:
-    def __init__(self, model_type, device, offload: bool = False, seed: int = None):
+    def __init__(self, model_type, device, offload: bool = False):
         self.device = torch.device(device)
         self.offload = offload
-        self.seed = seed
         self.model_type = model_type
 
         self.clip = load_clip(self.device)
@@ -78,6 +77,7 @@ class XFluxPipeline:
                  height: int = 512,
                  guidance: float = 4,
                  num_steps: int = 50,
+                 seed: int = 123456789,
                  true_gs = 3,
                  neg_prompt: str = '',
                  timestep_to_start_cfg: int = 0,
@@ -93,20 +93,20 @@ class XFluxPipeline:
             controlnet_image = torch.from_numpy((np.array(controlnet_image) / 127.5) - 1)
             controlnet_image = controlnet_image.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(self.device)
 
-        return self.forward(prompt, width, height, guidance, num_steps, controlnet_image,
+        return self.forward(prompt, width, height, guidance, num_steps, seed, controlnet_image,
          timestep_to_start_cfg=timestep_to_start_cfg, true_gs=true_gs, neg_prompt=neg_prompt)
 
-    def forward(self, prompt, width, height, guidance, num_steps, controlnet_image=None, timestep_to_start_cfg=0, true_gs=3, neg_prompt=""):
+    def forward(self, prompt, width, height, guidance, num_steps, seed, controlnet_image=None, timestep_to_start_cfg=0, true_gs=3, neg_prompt=""):
         x = get_noise(
             1, height, width, device=self.device,
-            dtype=torch.bfloat16, seed=self.seed
+            dtype=torch.bfloat16, seed=seed
         )
         timesteps = get_schedule(
             num_steps,
             (width // 8) * (height // 8) // (16 * 16),
             shift=True,
         )
-        torch.manual_seed(self.seed)
+        torch.manual_seed(seed)
         with torch.no_grad():
             if self.offload:
                 self.t5, self.clip = self.t5.to(self.device), self.clip.to(self.device)
