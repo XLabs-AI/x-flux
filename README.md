@@ -40,9 +40,10 @@ It's available for 1024x1024 resolution!
 
 ## Models
 
-We trained **Canny ControlNet**, **Depth ControlNet**, **HED ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
+We trained **IP-Adapter**, **Canny ControlNet**, **Depth ControlNet**, **HED ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
 You can download them on HuggingFace:
 
+- [flux-ip-adapter](https://huggingface.co/XLabs-AI/flux-ip-adapter)
 - [flux-controlnet-collections](https://huggingface.co/XLabs-AI/flux-controlnet-collections)
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
@@ -87,6 +88,17 @@ A `.json` file contains "caption" field with a text prompt.
 ## Inference
 
 To test our checkpoints, use commands presented below.
+
+### IP-Adapter
+```bash
+python3 main.py \
+ --prompt "wearing glasses" \
+ --ip_repo_id XLabs-AI/flux-ip-adapter --ip_name flux-ip-adapter.safetensors --device cuda --use_ip \
+ --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 \
+ --true_gs 3.5 --guidance 4 \
+ --img_prompt assets/example_images/statue.jpg
+```
 
 ### LoRA
 ![Example Picture 1](./assets/readme/examples/picture-5-rev1.png)
