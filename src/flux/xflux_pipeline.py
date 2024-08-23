@@ -6,6 +6,7 @@ from torch import Tensor
 from einops import rearrange
 
 from src.flux.modules.layers import (
+    SingleStreamBlockProcessor,
     DoubleStreamBlockLoraProcessor,
     IPDoubleStreamBlockProcessor,
     ImageProjModel,
