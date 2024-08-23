@@ -175,8 +175,8 @@ class XFluxPipeline:
                  neg_image_prompt: Image = None,
                  timestep_to_start_cfg: int = 0,
                  ):
-        width = 16 * width // 16
-        height = 16 * height // 16
+        width = 16 * (width // 16)
+        height = 16 * (height // 16)
         image_proj = None
         neg_image_proj = None
         if not (image_prompt is None and neg_image_prompt is None) :
