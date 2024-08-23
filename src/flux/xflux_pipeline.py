@@ -79,25 +79,6 @@ class XFluxPipeline:
         self.improj.load_state_dict(proj)
         self.improj = self.improj.to(self.device, dtype=torch.bfloat16)
 
-        # load weights to ip-adapter-processors and set them to model 
-        # ip_attn_processors = torch.nn.ModuleList([IPDoubleStreamBlockProcessor(4096, 3072) for i in range(19)])
-        # ip_attn_processors.load_state_dict(blocks)
-        # ip_attn_processors.to(self.device, dtype=torch.bfloat16)
-        
-        # ip_attn_procs = {}
-        # for attn_proc_name, ip_processor in zip(
-        #     self.model.attn_processors.keys(), 
-        #     ip_attn_processors
-        # ):
-        #     ip_attn_procs[attn_proc_name] = ip_processor
-
-        # self.model.set_attn_processor(ip_attn_procs)
-
-        # for name, module in self.model.named_children():
-        #     print(name)
-        
-        # self.ip_loaded = True
-
         ip_attn_procs = {}
 
         for name, _ in self.model.attn_processors.items():
