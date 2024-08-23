@@ -144,6 +144,8 @@ class Flux(nn.Module):
         y: Tensor,
         block_controlnet_hidden_states=None,
         guidance: Tensor | None = None,
+        image_proj: Tensor | None = None, 
+        ip_scale: Tensor | float = 1.0, 
     ) -> Tensor:
         if img.ndim != 3 or txt.ndim != 3:
             raise ValueError("Input img and txt tensors must have 3 dimensions.")
@@ -181,9 +183,18 @@ class Flux(nn.Module):
                     txt,
                     vec,
                     pe,
+                    image_proj,
+                    ip_scale,
                 )
             else:
-                img, txt = block(img=img, txt=txt, vec=vec, pe=pe)
+                img, txt = block(
+                    img=img, 
+                    txt=txt, 
+                    vec=vec, 
+                    pe=pe, 
+                    image_proj=image_proj,
+                    ip_scale=ip_scale, 
+                )
             # controlnet residual
             if block_controlnet_hidden_states is not None:
                 img = img + block_controlnet_hidden_states[index_block % 2]

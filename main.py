@@ -17,6 +17,22 @@ def create_argparser():
         help="The input text negative prompt"
     )
     parser.add_argument(
+        "--img_prompt", type=str, default=None,
+        help="Path to input image prompt"
+    )
+    parser.add_argument(
+        "--neg_img_prompt", type=str, default=None,
+        help="Path to input negative image prompt"
+    )
+    parser.add_argument(
+        "--ip_scale", type=float, default=1.0,
+        help="Strength of input image prompt"
+    )
+    parser.add_argument(
+        "--neg_ip_scale", type=float, default=1.0,
+        help="Strength of negative input image prompt"
+    )
+    parser.add_argument(
         "--local_path", type=str, default=None,
         help="Local path to the model checkpoint (Controlnet)"
     )
@@ -27,6 +43,18 @@ def create_argparser():
     parser.add_argument(
         "--name", type=str, default=None,
         help="A filename to download from HuggingFace"
+    )
+    parser.add_argument(
+        "--ip_repo_id", type=str, default=None,
+        help="A HuggingFace repo id to download model (IP-Adapter)"
+    )
+    parser.add_argument(
+        "--ip_name", type=str, default=None,
+        help="A IP-Adapter filename to download from HuggingFace"
+    )
+    parser.add_argument(
+        "--ip_local_path", type=str, default=None,
+        help="Local path to the model checkpoint (IP-Adapter)"
     )
     parser.add_argument(
         "--lora_repo_id", type=str, default=None,
@@ -46,6 +74,9 @@ def create_argparser():
     )
     parser.add_argument(
         "--offload", action='store_true', help="Offload model to CPU when not in use"
+    )
+    parser.add_argument(
+        "--use_ip", action='store_true', help="Load IP model"
     )
     parser.add_argument(
         "--use_lora", action='store_true', help="Load Lora model"
@@ -105,27 +136,38 @@ def main(args):
         image = Image.open(args.image)
     else:
         image = None
-
+    
     xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload)
+    if args.use_ip:
+        print('load ip-adapter:', args.ip_local_path, args.ip_repo_id, args.ip_name)
+        xflux_pipeline.set_ip(args.ip_local_path, args.ip_repo_id, args.ip_name)
     if args.use_lora:
         print('load lora:', args.lora_local_path, args.lora_repo_id, args.lora_name)
         xflux_pipeline.set_lora(args.lora_local_path, args.lora_repo_id, args.lora_name, args.lora_weight)
     if args.use_controlnet:
         print('load controlnet:', args.local_path, args.repo_id, args.name)
         xflux_pipeline.set_controlnet(args.control_type, args.local_path, args.repo_id, args.name)
-
+    
+    image_prompt = Image.open(args.img_prompt) if args.img_prompt else None
+    neg_image_prompt = Image.open(args.neg_img_prompt) if args.neg_img_prompt else None
+        
     for _ in range(args.num_images_per_prompt):
-        result = xflux_pipeline(prompt=args.prompt,
-                                controlnet_image=image,
-                                width=args.width,
-                                height=args.height,
-                                guidance=args.guidance,
-                                num_steps=args.num_steps,
-                                seed=args.seed,
-                                true_gs=args.true_gs,
-                                neg_prompt=args.neg_prompt,
-                                timestep_to_start_cfg=args.timestep_to_start_cfg,
-                                )
+        result = xflux_pipeline(
+            prompt=args.prompt,
+            controlnet_image=image,
+            width=args.width,
+            height=args.height,
+            guidance=args.guidance,
+            num_steps=args.num_steps,
+            seed=args.seed,
+            true_gs=args.true_gs,
+            neg_prompt=args.neg_prompt,
+            timestep_to_start_cfg=args.timestep_to_start_cfg,
+            image_prompt=image_prompt, 
+            neg_image_prompt=neg_image_prompt, 
+            ip_scale=args.ip_scale, 
+            neg_ip_scale=args.neg_ip_scale, 
+        )
         if not os.path.exists(args.save_path):
             os.mkdir(args.save_path)
         ind = len(os.listdir(args.save_path))

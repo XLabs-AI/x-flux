@@ -110,6 +110,11 @@ def denoise(
     guidance: float = 4.0,
     true_gs = 1,
     timestep_to_start_cfg=0,
+    # ip-adapter parameters
+    image_proj: Tensor=None, 
+    neg_image_proj: Tensor=None, 
+    ip_scale: Tensor | float = 1.0,
+    neg_ip_scale: Tensor | float = 1.0
 ):
     i = 0
     # this is ignored for schnell
@@ -124,6 +129,8 @@ def denoise(
             y=vec,
             timesteps=t_vec,
             guidance=guidance_vec,
+            image_proj=image_proj,
+            ip_scale=ip_scale, 
         )
         if i >= timestep_to_start_cfg:
             neg_pred = model(
@@ -133,7 +140,9 @@ def denoise(
                 txt_ids=neg_txt_ids,
                 y=neg_vec,
                 timesteps=t_vec,
-                guidance=guidance_vec,
+                guidance=guidance_vec, 
+                image_proj=neg_image_proj,
+                ip_scale=neg_ip_scale, 
             )     
             pred = neg_pred + true_gs * (pred - neg_pred)
         img = img + (t_prev - t_curr) * pred
@@ -159,6 +168,11 @@ def denoise_controlnet(
     true_gs = 1,
     controlnet_gs=0.7,
     timestep_to_start_cfg=0,
+    # ip-adapter parameters
+    image_proj: Tensor=None, 
+    neg_image_proj: Tensor=None, 
+    ip_scale: Tensor | float = 1, 
+    neg_ip_scale: Tensor | float = 1, 
 ):
     # this is ignored for schnell
     i = 0
@@ -183,7 +197,9 @@ def denoise_controlnet(
             y=vec,
             timesteps=t_vec,
             guidance=guidance_vec,
-            block_controlnet_hidden_states=[i * controlnet_gs for i in block_res_samples]
+            block_controlnet_hidden_states=[i * controlnet_gs for i in block_res_samples],
+            image_proj=image_proj,
+            ip_scale=ip_scale,
         )
         if i >= timestep_to_start_cfg:
             neg_block_res_samples = controlnet(
@@ -204,7 +220,9 @@ def denoise_controlnet(
                 y=neg_vec,
                 timesteps=t_vec,
                 guidance=guidance_vec,
-                block_controlnet_hidden_states=[i * controlnet_gs for i in neg_block_res_samples]
+                block_controlnet_hidden_states=[i * controlnet_gs for i in neg_block_res_samples],
+                image_proj=neg_image_proj,
+                ip_scale=neg_ip_scale, 
             )     
             pred = neg_pred + true_gs * (pred - neg_pred)
    
