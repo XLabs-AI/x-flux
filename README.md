@@ -50,6 +50,7 @@ You can download them on HuggingFace:
 - [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
 - [flux-furry-lora](https://huggingface.co/XLabs-AI/flux-furry-lora)
 
+Also, our models are avaiable at [civit.ai](https://civitai.com/user/xlabs_ai)
 ### LoRA
 
 ```bash
@@ -108,120 +109,96 @@ prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
 
 ```bash
 python3 main.py \
- --prompt "Female furry Pixie with text 'hello world'" \
- --lora_repo_id XLabs-AI/flux-furry-lora --lora_name furry_lora.safetensors --device cuda --offload --use_lora \
- --model_type flux-dev-fp8 --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
-```
-
-![Example Picture 1](./assets/readme/examples/furry4.png)
-
-```bash
-python3 main.py \
---prompt "A cute corgi lives in a house made out of sushi, anime" \
---lora_repo_id XLabs-AI/flux-lora-collection --lora_name anime_lora.safetensors \
---device cuda --offload --use_lora --model_type flux-dev-fp8 --width 1024 --height 1024
-
+ --prompt "A cute corgi lives in a house made out of sushi, anime" \
+ --lora_repo_id XLabs-AI/flux-lora-collection \
+ --lora_name anime_lora.safetensors \
+ --use_lora --width 1024 --height 1024
 ```
 ![Example Picture 3](./assets/readme/examples/result_14.png)
 
 
 ```bash
 python3 main.py \
-    --use_lora --lora_weight 0.7 \
-    --width 1024 --height 768 \
-    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
-    --guidance 4 \
-    --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
+ --use_lora --lora_weight 0.7 \
+ --width 1024 --height 768 \
+ --lora_repo_id XLabs-AI/flux-lora-collection \
+ --lora_name realism_lora.safetensors \
+ --guidance 4 \
+ --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
 
-## Canny ControlNet
+## Canny ControlNet V3
 ```bash
 python3 main.py \
- --prompt "a viking man with white hair looking, cinematic, MM full HD" \
- --image input_image_canny.jpg \
- --control_type canny \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-canny-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "cyberpank dining room, full hd, cinematic" \
+ --image input_canny1.png --control_type canny \
+ --repo_id XLabs-AI/flux-controlnet-canny-v3 \
+ --name flux-canny-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 4 --guidance 4
 ```
-![Example Picture 1](./assets/readme/examples/canny_example_1.png?raw=true)
-
-## Depth ControlNet
+![Example Picture 1](./assets/readme/examples/canny_result1.png?raw=true)
 ```bash
 python3 main.py \
- --prompt "Photo of the bold man with beard and laptop, full hd, cinematic photo" \
- --image input_image_depth1.jpg \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "handsome korean woman, full hd, cinematic" \
+ --image input_canny2.png --control_type canny \
+ --repo_id XLabs-AI/flux-controlnet-canny-v3 \
+ --name flux-canny-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 4 --guidance 4
 ```
-![Example Picture 2](./assets/readme/examples/depth_example_1.png?raw=true)
+![Example Picture 1](./assets/readme/examples/canny_result2.png?raw=true)
 
+## Depth ControlNet V3
 ```bash
 python3 main.py \
- --prompt "photo of handsome fluffy black dog standing on a forest path, full hd, cinematic photo" \
- --image input_image_depth2.jpg \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "handsome man in balenciaga style, fashion" \
+ --image input_depth1.png --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-depth-v3 \
+ --name flux-depth-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024 --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 3
 ```
-![Example Picture 2](./assets/readme/examples/depth_example_2.png?raw=true)
-
-```bash
-python3 main.py \
- --prompt "Photo of japanese village with houses and sakura, full hd, cinematic photo" \
- --image input_image_depth3.webp \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
-```
-![Example Picture 2](./assets/readme/examples/depth_example_3.png?raw=true)
-
-
-## HED ControlNet
-```bash
-python3 main.py \
- --prompt "2d art of a sitting african rich woman, full hd, cinematic photo" \
- --image input_image_hed1.jpg \
- --control_type hed \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
-```
-![Example Picture 2](./assets/readme/examples/hed_example_1.png?raw=true)
+![Example Picture 2](./assets/readme/examples/depth_result1.png?raw=true)
 
 ```bash
 python3 main.py \
- --prompt "anime ghibli style art of a running happy white dog, full hd" \
- --image input_image_hed2.jpg \
- --control_type hed \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "a village in minecraft style, 3d, full hd" \
+ --image input_depth2.png --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-depth-v3 \
+ --name flux-depth-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024 --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 3
 ```
-![Example Picture 2](./assets/readme/examples/hed_example_2.png?raw=true)
+![Example Picture 2](./assets/readme/examples/depth_result2.png?raw=true)
+
+## HED ControlNet V3
+```bash
+ python3 main.py \
+ --prompt "A beautiful woman with white hair and light freckles, her neck area bare and visible" \
+ --image input_hed1.png --control_type hed \
+ --repo_id XLabs-AI/flux-controlnet-hed-v3 \
+ --name flux-hed-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 4
+```
+![Example Picture 2](./assets/readme/examples/hed_result1.png?raw=true)
 
 ## Low memory mode
 
-Use LoRA and Controlnet FP8 version based on [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) with `--offload` setting to achieve lower VRAM usage (22 GB) and `--name flux-dev-fp8`:
+Use quantized version [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) to achieve lower VRAM usage (22 GB) with `--offload` and `--model_type flux-dev-fp8` settings:
 ```bash
 python3 main.py \
-    --offload --name flux-dev-fp8 \
-    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
-    --guidance 4 \
-    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
+ --offload --model_type flux-dev-fp8 \
+  --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
+ --guidance 4 \
+ --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
