@@ -104,9 +104,10 @@ def main():
     dit, vae, t5, clip = get_models(name=args.model_name, device=accelerator.device, offload=False, is_schnell=is_schnell)
     lora_attn_procs = {}
 
-    for name, attn_processor in dit.attn_processors.items():
-        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=args.rank)
-
+    for name, attn_processor in dit.attn_processors.items(): 
+        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(
+              dim=3072, rank=args.rank
+        ) if name.startswith("double_blocks") else attn_processor
     dit.set_attn_processor(lora_attn_procs)
     
     vae.requires_grad_(False)
