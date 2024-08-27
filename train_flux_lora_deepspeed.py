@@ -6,6 +6,7 @@ import random
 import shutil
 from contextlib import nullcontext
 from pathlib import Path
+from safetensors.torch import save_file
 
 import accelerate
 import datasets
@@ -284,8 +285,14 @@ def main():
 
                     accelerator.save_state(save_path)
                     unwrapped_model_state = accelerator.unwrap_model(dit).state_dict()
-                    
-                    torch.save({k:unwrapped_model_state[k] for k in unwrapped_model_state.keys() if '_lora' in k}, os.path.join(save_path, 'lora.bin'))
+
+                    # save checkpoint in safetensors format
+                    lora_state_dict = {k:unwrapped_model_state[k] for k in unwrapped_model_state.keys() if '_lora' in k}
+                    save_file(
+                        lora_state_dict, 
+                        os.path.join(save_path, "lora.safetensors")
+                    )
+                  
                     logger.info(f"Saved state to {save_path}")
 
             logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
