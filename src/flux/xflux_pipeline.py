@@ -1,9 +1,11 @@
-from PIL import Image
+from PIL import Image, ExifTags
 import numpy as np
 import torch
 from torch import Tensor
 
 from einops import rearrange
+import uuid
+import os
 
 from src.flux.modules.layers import (
     SingleStreamBlockProcessor,
@@ -132,13 +134,9 @@ class XFluxPipeline:
 
         checkpoint = load_checkpoint(local_path, repo_id, name)
         self.controlnet.load_state_dict(checkpoint, strict=False)
-
-        if control_type == "depth":
-            self.controlnet_gs = 0.9
-        else:
-            self.controlnet_gs = 0.7
         self.annotator = Annotator(control_type, self.device)
         self.controlnet_loaded = True
+        self.control_type = control_type
 
     def get_image_proj(
         self,
@@ -168,9 +166,10 @@ class XFluxPipeline:
                  guidance: float = 4,
                  num_steps: int = 50,
                  seed: int = 123456789,
-                 true_gs = 3,
-                 ip_scale=1.0,
-                 neg_ip_scale=1.0,
+                 true_gs: float = 3,
+                 control_weight: float = 0.9,
+                 ip_scale: float = 1.0,
+                 neg_ip_scale: float = 1.0,
                  neg_prompt: str = '',
                  neg_image_prompt: Image = None,
                  timestep_to_start_cfg: int = 0,
@@ -210,12 +209,56 @@ class XFluxPipeline:
             controlnet_image,
             timestep_to_start_cfg=timestep_to_start_cfg,
             true_gs=true_gs,
+            control_weight=control_weight,
             neg_prompt=neg_prompt,
             image_proj=image_proj,
             neg_image_proj=neg_image_proj,
             ip_scale=ip_scale,
             neg_ip_scale=neg_ip_scale,
         )
+
+    @torch.inference_mode()
+    def gradio_generate(self, prompt, image_prompt, controlnet_image, width, height, guidance,
+                        num_steps, seed, true_gs, ip_scale, neg_ip_scale, neg_prompt,
+                        neg_image_prompt, timestep_to_start_cfg, control_type, control_weight,
+                        lora_weight, local_path, lora_local_path, ip_local_path):
+        if controlnet_image is not None:
+            controlnet_image = Image.fromarray(controlnet_image)
+            if ((self.controlnet_loaded and control_type != self.control_type)
+                or not self.controlnet_loaded):
+                if local_path is not None:
+                    self.set_controlnet(control_type, local_path=local_path)
+                else:
+                    self.set_controlnet(control_type, local_path=None,
+                                        repo_id=f"xlabs-ai/flux-controlnet-{control_type}-v3",
+                                        name=f"flux-{control_type}-controlnet-v3.safetensors")
+        if lora_local_path is not None:
+            self.set_lora(local_path=lora_local_path, lora_weight=lora_weight)
+        if image_prompt is not None:
+            image_prompt = Image.fromarray(image_prompt)
+            if neg_image_prompt is not None:
+                neg_image_prompt = Image.fromarray(neg_image_prompt)
+            if not self.ip_loaded:
+                if ip_local_path is not None:
+                    self.set_ip(local_path=ip_local_path)
+                else:
+                    self.set_ip(repo_id="xlabs-ai/flux-ip-adapter",
+                                name="flux-ip-adapter.safetensors")
+        seed = int(seed)
+        if seed == -1:
+            seed = torch.Generator(device="cpu").seed()
+
+        img = self(prompt, image_prompt, controlnet_image, width, height, guidance,
+                   num_steps, seed, true_gs, control_weight, ip_scale, neg_ip_scale, neg_prompt,
+                   neg_image_prompt, timestep_to_start_cfg)
+
+        filename = f"output/gradio/{uuid.uuid4()}.jpg"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        exif_data = Image.Exif()
+        exif_data[ExifTags.Base.Make] = "XLabs AI"
+        exif_data[ExifTags.Base.Model] = self.model_type
+        img.save(filename, format="jpeg", exif=exif_data, quality=95, subsampling=0)
+        return img, filename
 
     def forward(
         self,
@@ -225,9 +268,10 @@ class XFluxPipeline:
         guidance,
         num_steps,
         seed,
-        controlnet_image=None,
-        timestep_to_start_cfg=0,
-        true_gs=3.5,
+        controlnet_image = None,
+        timestep_to_start_cfg = 0,
+        true_gs = 3.5,
+        control_weight = 0.9,
         neg_prompt="",
         image_proj=None,
         neg_image_proj=None,
@@ -266,7 +310,7 @@ class XFluxPipeline:
                     neg_txt_ids=neg_inp_cond['txt_ids'],
                     neg_vec=neg_inp_cond['vec'],
                     true_gs=true_gs,
-                    controlnet_gs=self.controlnet_gs,
+                    controlnet_gs=control_weight,
                     image_proj=image_proj,
                     neg_image_proj=neg_image_proj,
                     ip_scale=ip_scale,

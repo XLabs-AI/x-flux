@@ -88,8 +88,17 @@ A `.json` file contains "caption" field with a text prompt.
 
 ## Inference
 
-To test our checkpoints, use commands presented below.
+To test our checkpoints, you can use several options:
+1. Launch adapters in ComfyUI with our workflows, [see our repo](https://github.com/XLabs-AI/x-flux-comfyui) for more details
+2. Use main.py script with CLI commands
+3. Use Gradio demo with simple UI
 
+### Gradio
+Launch gradio as follows:
+```
+python3 gradio_demo.py --ckpt_dir model_weights
+```
+Define `--ckpt_dir` as the folder location with the downloaded XLabs AI adapter weights (LoRAs, IP-adapter, ControlNets)
 ### IP-Adapter
 ```bash
 python3 main.py \

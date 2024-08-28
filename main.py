@@ -95,6 +95,9 @@ def create_argparser():
         "--lora_weight", type=float, default=0.9, help="Lora model strength (from 0 to 1.0)"
     )
     parser.add_argument(
+        "--control_weight", type=float, default=0.8, help="Controlnet model strength (from 0 to 1.0)"
+    )
+    parser.add_argument(
         "--control_type", type=str, default="canny",
         choices=("canny", "openpose", "depth", "hed", "hough", "tile"),
         help="Name of controlnet condition, example: canny"
@@ -136,7 +139,7 @@ def main(args):
         image = Image.open(args.image)
     else:
         image = None
-    
+
     xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload)
     if args.use_ip:
         print('load ip-adapter:', args.ip_local_path, args.ip_repo_id, args.ip_name)
@@ -147,10 +150,10 @@ def main(args):
     if args.use_controlnet:
         print('load controlnet:', args.local_path, args.repo_id, args.name)
         xflux_pipeline.set_controlnet(args.control_type, args.local_path, args.repo_id, args.name)
-    
+
     image_prompt = Image.open(args.img_prompt) if args.img_prompt else None
     neg_image_prompt = Image.open(args.neg_img_prompt) if args.neg_img_prompt else None
-        
+
     for _ in range(args.num_images_per_prompt):
         result = xflux_pipeline(
             prompt=args.prompt,
@@ -161,12 +164,13 @@ def main(args):
             num_steps=args.num_steps,
             seed=args.seed,
             true_gs=args.true_gs,
+            control_weight=args.control_weight,
             neg_prompt=args.neg_prompt,
             timestep_to_start_cfg=args.timestep_to_start_cfg,
-            image_prompt=image_prompt, 
-            neg_image_prompt=neg_image_prompt, 
-            ip_scale=args.ip_scale, 
-            neg_ip_scale=args.neg_ip_scale, 
+            image_prompt=image_prompt,
+            neg_image_prompt=neg_image_prompt,
+            ip_scale=args.ip_scale,
+            neg_ip_scale=args.neg_ip_scale,
         )
         if not os.path.exists(args.save_path):
             os.mkdir(args.save_path)

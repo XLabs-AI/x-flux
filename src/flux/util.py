@@ -39,13 +39,13 @@ def get_lora_rank(checkpoint):
 def load_checkpoint(local_path, repo_id, name):
     if local_path is not None:
         if '.safetensors' in local_path:
-            print("Loading .safetensors checkpoint...")
+            print(f"Loading .safetensors checkpoint from {local_path}")
             checkpoint = load_safetensors(local_path)
         else:
-            print("Loading checkpoint...")
+            print(f"Loading checkpoint from {local_path}")
             checkpoint = torch.load(local_path, map_location='cpu')
     elif repo_id is not None and name is not None:
-        print("Loading checkpoint from repo id...")
+        print(f"Loading checkpoint {name} from repo id {repo_id}")
         checkpoint = load_from_repo_id(repo_id, name)
     else:
         raise ValueError(
