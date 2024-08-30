@@ -6,7 +6,7 @@ from einops import rearrange
 from torch import Tensor, nn
 
 from ..math import attention, rope
-
+import torch.nn.functional as F
 
 class EmbedND(nn.Module):
     def __init__(self, dim: int, theta: int, axes_dim: list[int]):
@@ -218,6 +218,88 @@ class DoubleStreamBlockLoraProcessor(nn.Module):
         txt = txt + txt_mod2.gate * attn.txt_mlp((1 + txt_mod2.scale) * attn.txt_norm2(txt) + txt_mod2.shift)
         return img, txt
 
+class IPDoubleStreamBlockProcessor(nn.Module):
+    """Attention processor for handling IP-adapter with double stream block."""
+
+    def __init__(self, context_dim, hidden_dim):
+        super().__init__()
+        if not hasattr(F, "scaled_dot_product_attention"):
+            raise ImportError(
+                "IPDoubleStreamBlockProcessor requires PyTorch 2.0 or higher. Please upgrade PyTorch."
+            )
+        
+        # Ensure context_dim matches the dimension of image_proj
+        self.context_dim = context_dim
+        self.hidden_dim = hidden_dim
+
+        # Initialize projections for IP-adapter
+        self.ip_adapter_double_stream_k_proj = nn.Linear(context_dim, hidden_dim, bias=True)
+        self.ip_adapter_double_stream_v_proj = nn.Linear(context_dim, hidden_dim, bias=True)
+        
+        nn.init.zeros_(self.ip_adapter_double_stream_k_proj.weight)
+        nn.init.zeros_(self.ip_adapter_double_stream_k_proj.bias)
+        
+        nn.init.zeros_(self.ip_adapter_double_stream_v_proj.weight)
+        nn.init.zeros_(self.ip_adapter_double_stream_v_proj.bias)
+        
+    def __call__(self, attn, img, txt, vec, pe, image_proj, ip_scale=1.0, **attention_kwargs):
+
+        # Prepare image for attention
+        img_mod1, img_mod2 = attn.img_mod(vec)
+        txt_mod1, txt_mod2 = attn.txt_mod(vec)
+
+        img_modulated = attn.img_norm1(img)
+        img_modulated = (1 + img_mod1.scale) * img_modulated + img_mod1.shift
+        img_qkv = attn.img_attn.qkv(img_modulated)
+        img_q, img_k, img_v = rearrange(img_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads, D=attn.head_dim)
+        img_q, img_k = attn.img_attn.norm(img_q, img_k, img_v)
+
+        txt_modulated = attn.txt_norm1(txt)
+        txt_modulated = (1 + txt_mod1.scale) * txt_modulated + txt_mod1.shift
+        txt_qkv = attn.txt_attn.qkv(txt_modulated)
+        txt_q, txt_k, txt_v = rearrange(txt_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads, D=attn.head_dim)
+        txt_q, txt_k = attn.txt_attn.norm(txt_q, txt_k, txt_v)
+
+        q = torch.cat((txt_q, img_q), dim=2)
+        k = torch.cat((txt_k, img_k), dim=2)
+        v = torch.cat((txt_v, img_v), dim=2)
+        
+        attn1 = attention(q, k, v, pe=pe)
+        txt_attn, img_attn = attn1[:, :txt.shape[1]], attn1[:, txt.shape[1]:]
+        
+        # print(f"txt_attn shape: {txt_attn.size()}")
+        # print(f"img_attn shape: {img_attn.size()}")
+        
+        img = img + img_mod1.gate * attn.img_attn.proj(img_attn)
+        img = img + img_mod2.gate * attn.img_mlp((1 + img_mod2.scale) * attn.img_norm2(img) + img_mod2.shift)
+
+        txt = txt + txt_mod1.gate * attn.txt_attn.proj(txt_attn)
+        txt = txt + txt_mod2.gate * attn.txt_mlp((1 + txt_mod2.scale) * attn.txt_norm2(txt) + txt_mod2.shift)
+        
+        
+        # IP-adapter processing
+        ip_query = img_q  # latent sample query
+        ip_key = self.ip_adapter_double_stream_k_proj(image_proj)
+        ip_value = self.ip_adapter_double_stream_v_proj(image_proj)
+        
+        # Reshape projections for multi-head attention
+        ip_key = rearrange(ip_key, 'B L (H D) -> B H L D', H=attn.num_heads, D=attn.head_dim)
+        ip_value = rearrange(ip_value, 'B L (H D) -> B H L D', H=attn.num_heads, D=attn.head_dim)
+
+        # Compute attention between IP projections and the latent query
+        ip_attention = F.scaled_dot_product_attention(
+            ip_query, 
+            ip_key, 
+            ip_value, 
+            dropout_p=0.0, 
+            is_causal=False
+        )
+        ip_attention = rearrange(ip_attention, "B H L D -> B L (H D)", H=attn.num_heads, D=attn.head_dim)
+        
+        img = img + ip_scale * ip_attention
+
+        return img, txt
+    
 class DoubleStreamBlockProcessor:
     def __call__(self, attn, img, txt, vec, pe, **attention_kwargs):
         img_mod1, img_mod2 = attn.img_mod(vec)
@@ -227,14 +309,14 @@ class DoubleStreamBlockProcessor:
         img_modulated = attn.img_norm1(img)
         img_modulated = (1 + img_mod1.scale) * img_modulated + img_mod1.shift
         img_qkv = attn.img_attn.qkv(img_modulated)
-        img_q, img_k, img_v = rearrange(img_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads)
+        img_q, img_k, img_v = rearrange(img_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads, D=attn.head_dim)
         img_q, img_k = attn.img_attn.norm(img_q, img_k, img_v)
 
         # prepare txt for attention
         txt_modulated = attn.txt_norm1(txt)
         txt_modulated = (1 + txt_mod1.scale) * txt_modulated + txt_mod1.shift
         txt_qkv = attn.txt_attn.qkv(txt_modulated)
-        txt_q, txt_k, txt_v = rearrange(txt_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads)
+        txt_q, txt_k, txt_v = rearrange(txt_qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads, D=attn.head_dim)
         txt_q, txt_k = attn.txt_attn.norm(txt_q, txt_k, txt_v)
 
         # run actual attention
@@ -260,6 +342,8 @@ class DoubleStreamBlock(nn.Module):
         mlp_hidden_dim = int(hidden_size * mlp_ratio)
         self.num_heads = num_heads
         self.hidden_size = hidden_size
+        self.head_dim = hidden_size // num_heads
+        
         self.img_mod = Modulation(hidden_size, double=True)
         self.img_norm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         self.img_attn = SelfAttention(dim=hidden_size, num_heads=num_heads, qkv_bias=qkv_bias)
@@ -290,9 +374,104 @@ class DoubleStreamBlock(nn.Module):
     def get_processor(self):
         return self.processor
 
-    def forward(self, img: Tensor, txt: Tensor, vec: Tensor, pe: Tensor) -> tuple[Tensor, Tensor]:
-      return self.processor(self, img, txt, vec, pe)
+    def forward(
+        self, 
+        img: Tensor, 
+        txt: Tensor, 
+        vec: Tensor, 
+        pe: Tensor, 
+        image_proj: Tensor = None, 
+        ip_scale: float =1.0,
+    ) -> tuple[Tensor, Tensor]:
+        if image_proj is None: 
+            return self.processor(self, img, txt, vec, pe)
+        else:
+            return self.processor(self, img, txt, vec, pe, image_proj, ip_scale)
 
+class IPSingleStreamBlockProcessor(nn.Module): 
+    """Attention processor for handling IP-adapter with single stream block."""
+    def __init__(self, context_dim, hidden_dim):
+        super().__init__()
+        if not hasattr(F, "scaled_dot_product_attention"):
+            raise ImportError(
+                "IPSingleStreamBlockProcessor requires PyTorch 2.0 or higher. Please upgrade PyTorch."
+            )
+
+        # Ensure context_dim matches the dimension of image_proj
+        self.context_dim = context_dim
+        self.hidden_dim = hidden_dim
+
+        # Initialize projections for IP-adapter
+        self.ip_adapter_single_stream_k_proj = nn.Linear(context_dim, hidden_dim, bias=False)
+        self.ip_adapter_single_stream_v_proj = nn.Linear(context_dim, hidden_dim, bias=False)
+
+        nn.init.zeros_(self.ip_adapter_single_stream_k_proj.weight)
+        nn.init.zeros_(self.ip_adapter_single_stream_v_proj.weight)
+        
+    def __call__(
+        self, 
+        attn: nn.Module, 
+        x: Tensor, 
+        vec: Tensor, 
+        pe: Tensor, 
+        image_proj: Tensor | None = None, 
+        ip_scale: float = 1.0
+    ) -> Tensor:
+        
+        mod, _ = attn.modulation(vec)
+        x_mod = (1 + mod.scale) * attn.pre_norm(x) + mod.shift
+        qkv, mlp = torch.split(attn.linear1(x_mod), [3 * attn.hidden_size, attn.mlp_hidden_dim], dim=-1)
+
+        q, k, v = rearrange(qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads, D=attn.head_dim)
+        q, k = attn.norm(q, k, v)
+
+        # compute attention
+        attn_1 = attention(q, k, v, pe=pe)
+        
+        # IP-adapter processing
+        ip_query = q  
+        ip_key = self.ip_adapter_single_stream_k_proj(image_proj)
+        ip_value = self.ip_adapter_single_stream_v_proj(image_proj)
+
+        # Reshape projections for multi-head attention
+        ip_key = rearrange(ip_key, 'B L (H D) -> B H L D', H=attn.num_heads, D=attn.head_dim)
+        ip_value = rearrange(ip_value, 'B L (H D) -> B H L D', H=attn.num_heads, D=attn.head_dim)
+        
+    
+        # Compute attention between IP projections and the latent query
+        ip_attention = F.scaled_dot_product_attention(
+            ip_query, 
+            ip_key, 
+            ip_value
+        )
+        ip_attention = rearrange(ip_attention, "B H L D -> B L (H D)")
+        
+        attn_out = attn_1 + ip_scale * ip_attention
+        
+        # compute activation in mlp stream, cat again and run second linear layer
+        output = attn.linear2(torch.cat((attn_out, attn.mlp_act(mlp)), 2))
+        out = x + mod.gate * output
+        
+        return out
+           
+class SingleStreamBlockProcessor: 
+    def __call__(self, attn: nn.Module, x: Tensor, vec: Tensor, pe: Tensor) -> Tensor:
+        
+        mod, _ = attn.modulation(vec)
+        x_mod = (1 + mod.scale) * attn.pre_norm(x) + mod.shift
+        qkv, mlp = torch.split(attn.linear1(x_mod), [3 * attn.hidden_size, attn.mlp_hidden_dim], dim=-1)
+
+        q, k, v = rearrange(qkv, "B L (K H D) -> K B H L D", K=3, H=attn.num_heads)
+        q, k = attn.norm(q, k, v)
+
+        # compute attention
+        attn_1 = attention(q, k, v, pe=pe)
+        
+        # compute activation in mlp stream, cat again and run second linear layer
+        output = attn.linear2(torch.cat((attn_1, attn.mlp_act(mlp)), 2))
+        output = x + mod.gate * output
+        return output
+        
 class SingleStreamBlock(nn.Module):
     """
     A DiT block with parallel linear layers as described in
@@ -309,8 +488,8 @@ class SingleStreamBlock(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_size
         self.num_heads = num_heads
-        head_dim = hidden_size // num_heads
-        self.scale = qk_scale or head_dim**-0.5
+        self.head_dim = hidden_size // num_heads
+        self.scale = qk_scale or self.head_dim**-0.5
 
         self.mlp_hidden_dim = int(hidden_size * mlp_ratio)
         # qkv and mlp_in
@@ -318,27 +497,37 @@ class SingleStreamBlock(nn.Module):
         # proj and mlp_out
         self.linear2 = nn.Linear(hidden_size + self.mlp_hidden_dim, hidden_size)
 
-        self.norm = QKNorm(head_dim)
+        self.norm = QKNorm(self.head_dim)
 
         self.hidden_size = hidden_size
         self.pre_norm = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
 
         self.mlp_act = nn.GELU(approximate="tanh")
         self.modulation = Modulation(hidden_size, double=False)
+        
+        processor = SingleStreamBlockProcessor()
+        self.set_processor(processor)
+        
+    
+    def set_processor(self, processor) -> None:
+        self.processor = processor
 
-    def forward(self, x: Tensor, vec: Tensor, pe: Tensor) -> Tensor:
-        mod, _ = self.modulation(vec)
-        x_mod = (1 + mod.scale) * self.pre_norm(x) + mod.shift
-        qkv, mlp = torch.split(self.linear1(x_mod), [3 * self.hidden_size, self.mlp_hidden_dim], dim=-1)
+    def get_processor(self):
+        return self.processor
+    
+    def forward(
+        self, 
+        x: Tensor, 
+        vec: Tensor, 
+        pe: Tensor, 
+        image_proj: Tensor | None = None, 
+        ip_scale: float = 1.0
+    ) -> Tensor:
+        if image_proj is None: 
+            return self.processor(self, x, vec, pe)
+        else:
+            return self.processor(self, x, vec, pe, image_proj, ip_scale)
 
-        q, k, v = rearrange(qkv, "B L (K H D) -> K B H L D", K=3, H=self.num_heads)
-        q, k = self.norm(q, k, v)
-
-        # compute attention
-        attn = attention(q, k, v, pe=pe)
-        # compute activation in mlp stream, cat again and run second linear layer
-        output = self.linear2(torch.cat((attn, self.mlp_act(mlp)), 2))
-        return x + mod.gate * output
 
 
 class LastLayer(nn.Module):
@@ -353,3 +542,26 @@ class LastLayer(nn.Module):
         x = (1 + scale[:, None, :]) * self.norm_final(x) + shift[:, None, :]
         x = self.linear(x)
         return x
+
+class ImageProjModel(torch.nn.Module):
+    """Projection Model
+    https://github.com/tencent-ailab/IP-Adapter/blob/main/ip_adapter/ip_adapter.py#L28
+    """
+
+    def __init__(self, cross_attention_dim=1024, clip_embeddings_dim=1024, clip_extra_context_tokens=4):
+        super().__init__()
+
+        self.generator = None
+        self.cross_attention_dim = cross_attention_dim
+        self.clip_extra_context_tokens = clip_extra_context_tokens
+        self.proj = torch.nn.Linear(clip_embeddings_dim, self.clip_extra_context_tokens * cross_attention_dim)
+        self.norm = torch.nn.LayerNorm(cross_attention_dim)
+
+    def forward(self, image_embeds):
+        embeds = image_embeds
+        clip_extra_context_tokens = self.proj(embeds).reshape(
+            -1, self.clip_extra_context_tokens, self.cross_attention_dim
+        )
+        clip_extra_context_tokens = self.norm(clip_extra_context_tokens)
+        return clip_extra_context_tokens
+
