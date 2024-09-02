@@ -65,12 +65,6 @@ class XFluxPipeline:
             if key.startswith("ip_adapter_proj_model"):
                 proj[key[len("ip_adapter_proj_model."):]] = value
 
-        for key, value in checkpoint.items():
-            if key.startswith(prefix):
-                blocks[key[len(prefix):].replace('.processor.', '.')] = value
-            if key.startswith("ip_adapter_proj_model"):
-                proj[key[len("ip_adapter_proj_model."):]] = value
-
         # load image encoder
         self.image_encoder = CLIPVisionModelWithProjection.from_pretrained(self.image_encoder_path).to(
             self.device, dtype=torch.float16
