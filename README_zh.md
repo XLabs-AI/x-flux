@@ -9,22 +9,52 @@
 
 - **LoRA** 🔥
 - **ControlNet** 🔥
+[<img src="https://github.com/XLabs-AI/x-flux/blob/main/assets/readme/light/join-our-discord-rev1.png?raw=true">](https://discord.gg/FHY2guThfy)
+
+# ComfyUI
+
+查看我们的 [ComfyUI 工作流GitHub](https://github.com/XLabs-AI/x-flux-comfyui)。
+![Example Picture 1](https://github.com/XLabs-AI/x-flux-comfyui/blob/main/assets/image1.png?raw=true)
+
+## 环境要求
+1. Python >= 3.10
+2. PyTorch >= 2.1
+3. 需要 HuggingFace CLI 用于下载我们的模型: ```huggingface-cli login```
+
+# 安装指南
+1. 克隆我们的仓库:
+```bash
+git clone https://github.com/XLabs-AI/x-flux.git
+```
+2. 创建新的虚拟环境:
+```bash
+python3 -m venv xflux_env
+source xflux_env/bin/activate
+```
+3. 通过执行以下指令安装我们需要的依赖:
+```bash
+cd x-flux
+pip install -r requirements.txt
+```
 
 # 训练
 
 我们训练 LoRA 和 ControlNet 模型的脚本用到了 [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
-这可以使得 1024x1024 分辨率可用!
+这可以支持 1024x1024 分辨率的数据!
 
 ## 模型
 
-我们训练了适用于 [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) 的 **Canny ControlNet**，**Depth ControlNet**，**HED ControlNet** 和**LoRA** 模型文件。<br/>
+我们训练了适用于 [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) 的 **IP-Adapter**，**Canny ControlNet**，**Depth ControlNet**，**HED ControlNet** 和**LoRA** 模型文件。<br/>
 你可以通过 Hugging Face下载它们。
 
+- [flux-ip-adapter](https://huggingface.co/XLabs-AI/flux-ip-adapter)
 - [flux-controlnet-collections](https://huggingface.co/XLabs-AI/flux-controlnet-collections)
 - [flux-controlnet-canny](https://huggingface.co/XLabs-AI/flux-controlnet-canny)
 - [flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora)
 - [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
 - [flux-furry-lora](https://huggingface.co/XLabs-AI/flux-furry-lora)
+
+同时, 我们的模型也可以在 [civit.ai](https://civitai.com/user/xlabs_ai) 访问。
 
 ### LoRA
 
@@ -63,120 +93,118 @@ accelerate launch train_flux_deepspeed_controlnet.py --config "train_configs/tes
 
 ## 推理
 
-为了测试保存的模型文件，应当使用下列的指令：
+为了测试我们的模型，你有以下选项:
+1. 在我们的ComfyUI 工作流启动 adapters, [查看我们的仓库](https://github.com/XLabs-AI/x-flux-comfyui) for more details
+2. 使用 `main.py` 在 CLI 命令行
+3. 使用 Gradio demo UI
+
+### Gradio
+可以按照以下指令启动 gradio:
+```
+python3 gradio_demo.py --ckpt_dir model_weights
+```
+ `--ckpt_dir` 是下载 XLabs AI adapter 模型权重 (LoRAs, IP-adapter, ControlNets) 的位置。
+ 
+### IP-Adapter
+```bash
+python3 main.py \
+ --prompt "wearing glasses" \
+ --ip_repo_id XLabs-AI/flux-ip-adapter --ip_name flux-ip-adapter.safetensors --device cuda --use_ip \
+ --width 1024 --height 1024 \
+ --timestep_to_start_cfg 1 --num_steps 25 \
+ --true_gs 3.5 --guidance 4 \
+ --img_prompt assets/example_images/statue.jpg
+```
 
 ### LoRA
-![示例图片 1](./assets/readme/examples/picture-5-rev1.png)
-提示词: "A girl in a suit covered with bold tattoos and holding a vest pistol, beautiful woman, 25 years old, cool, future fantasy, turquoise & light orange ping curl hair"
-![示例图片 2](./assets/readme/examples/picture-6-rev1.png)
-提示词: "A handsome man in a suit, 25 years old, cool, futuristic"
+![Example Picture 1](./assets/readme/examples/picture-5-rev1.png)
+prompt: "A girl in a suit covered with bold tattoos and holding a vest pistol, beautiful woman, 25 years old, cool, future fantasy, turquoise & light orange ping curl hair"
+![Example Picture 2](./assets/readme/examples/picture-6-rev1.png)
+prompt: "A handsome man in a suit, 25 years old, cool, futuristic"
 
 ```bash
 python3 main.py \
- --prompt "Female furry Pixie with text 'hello world'" \
- --lora_repo_id XLabs-AI/flux-furry-lora --lora_name furry_lora.safetensors --device cuda --offload --use_lora \
- --model_type flux-dev-fp8 --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "A cute corgi lives in a house made out of sushi, anime" \
+ --lora_repo_id XLabs-AI/flux-lora-collection \
+ --lora_name anime_lora.safetensors \
+ --use_lora --width 1024 --height 1024
 ```
-
-![示例图片 1](./assets/readme/examples/furry4.png)
-
-```bash
-python3 main.py \
---prompt "A cute corgi lives in a house made out of sushi, anime" \
---lora_repo_id XLabs-AI/flux-lora-collection --lora_name anime_lora.safetensors \
---device cuda --offload --use_lora --model_type flux-dev-fp8 --width 1024 --height 1024
-
-```
-![示例图片 3](./assets/readme/examples/result_14.png)
+![Example Picture 3](./assets/readme/examples/result_14.png)
 
 
 ```bash
 python3 main.py \
-    --use_lora --lora_weight 0.7 \
-    --width 1024 --height 768 \
-    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
-    --guidance 4 \
-    --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
+ --use_lora --lora_weight 0.7 \
+ --width 1024 --height 768 \
+ --lora_repo_id XLabs-AI/flux-lora-collection \
+ --lora_name realism_lora.safetensors \
+ --guidance 4 \
+ --prompt "contrast play photography of a black female wearing white suit and albino asian geisha female wearing black suit, solid background, avant garde, high fashion"
 ```
 ![Example Picture 3](./assets/readme/examples/picture-7-rev1.png)
 
-## Canny ControlNet
+## Canny ControlNet V3
 ```bash
 python3 main.py \
- --prompt "a viking man with white hair looking, cinematic, MM full HD" \
- --image input_image_canny.jpg \
- --control_type canny \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-canny-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "cyberpank dining room, full hd, cinematic" \
+ --image input_canny1.png --control_type canny \
+ --repo_id XLabs-AI/flux-controlnet-canny-v3 \
+ --name flux-canny-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 4 --guidance 4
 ```
-![示例图片 1](./assets/readme/examples/canny_example_1.png?raw=true)
-
-## Depth ControlNet
+![Example Picture 1](./assets/readme/examples/canny_result1.png?raw=true)
 ```bash
 python3 main.py \
- --prompt "Photo of the bold man with beard and laptop, full hd, cinematic photo" \
- --image input_image_depth1.jpg \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "handsome korean woman, full hd, cinematic" \
+ --image input_canny2.png --control_type canny \
+ --repo_id XLabs-AI/flux-controlnet-canny-v3 \
+ --name flux-canny-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 4 --guidance 4
 ```
-![示例图片 2](./assets/readme/examples/depth_example_1.png?raw=true)
+![Example Picture 1](./assets/readme/examples/canny_result2.png?raw=true)
 
+## Depth ControlNet V3
 ```bash
 python3 main.py \
- --prompt "photo of handsome fluffy black dog standing on a forest path, full hd, cinematic photo" \
- --image input_image_depth2.jpg \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "handsome man in balenciaga style, fashion" \
+ --image input_depth1.png --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-depth-v3 \
+ --name flux-depth-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024 --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 3
 ```
-![示例图片 2](./assets/readme/examples/depth_example_2.png?raw=true)
-
-```bash
-python3 main.py \
- --prompt "Photo of japanese village with houses and sakura, full hd, cinematic photo" \
- --image input_image_depth3.webp \
- --control_type depth \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-depth-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 1024 --height 1024 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
-```
-![示例图片 2](./assets/readme/examples/depth_example_3.png?raw=true)
-
-
-## HED ControlNet
-```bash
-python3 main.py \
- --prompt "2d art of a sitting african rich woman, full hd, cinematic photo" \
- --image input_image_hed1.jpg \
- --control_type hed \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
-```
-![Example Picture 2](./assets/readme/examples/hed_example_1.png?raw=true)
+![Example Picture 2](./assets/readme/examples/depth_result1.png?raw=true)
 
 ```bash
 python3 main.py \
- --prompt "anime ghibli style art of a running happy white dog, full hd" \
- --image input_image_hed2.jpg \
- --control_type hed \
- --repo_id XLabs-AI/flux-controlnet-collections --name flux-hed-controlnet.safetensors --device cuda --use_controlnet \
- --model_type flux-dev --width 768 --height 768 \
- --timestep_to_start_cfg 1 --num_steps 25 --true_gs 3.5 --guidance 4
-
+ --prompt "a village in minecraft style, 3d, full hd" \
+ --image input_depth2.png --control_type depth \
+ --repo_id XLabs-AI/flux-controlnet-depth-v3 \
+ --name flux-depth-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024 --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 3
 ```
-![Example Picture 2](./assets/readme/examples/hed_example_2.png?raw=true)
+![Example Picture 2](./assets/readme/examples/depth_result2.png?raw=true)
+
+
+## HED ControlNet V3
+```bash
+ python3 main.py \
+ --prompt "A beautiful woman with white hair and light freckles, her neck area bare and visible" \
+ --image input_hed1.png --control_type hed \
+ --repo_id XLabs-AI/flux-controlnet-hed-v3 \
+ --name flux-hed-controlnet-v3.safetensors \
+ --use_controlnet --model_type flux-dev \
+ --width 1024 --height 1024  --timestep_to_start_cfg 1 \
+ --num_steps 25 --true_gs 3.5 --guidance 4
+```
+![Example Picture 2](./assets/readme/examples/hed_result1.png?raw=true)
 
 ## 低显存模式
 
@@ -189,14 +217,6 @@ python3 main.py \
     --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
-
-## 要求
-
-通过以下指令安装依赖：
-
-```bash
-pip3 install -r requirements.txt
-```
 
 ## 加速设置的示例
 
