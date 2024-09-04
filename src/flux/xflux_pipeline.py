@@ -9,6 +9,7 @@ import os
 
 from src.flux.modules.layers import (
     SingleStreamBlockProcessor,
+    SingleStreamBlockLoraProcessor,
     DoubleStreamBlockLoraProcessor,
     IPDoubleStreamBlockProcessor,
     ImageProjModel,
@@ -110,14 +111,16 @@ class XFluxPipeline:
 
         for name, _ in self.model.attn_processors.items():
             if name.startswith("single_blocks"):
-                lora_attn_procs[name] = SingleStreamBlockProcessor()
+                lora_attn_procs[name] = SingleStreamBlockProcessor() # SingleStreamBlockLoraProcessor(dim=3072, rank=rank)
                 continue
-            lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=rank)
+            elif name.startswith("double_blocks"):
+                lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=rank)
+
             lora_state_dict = {}
             for k in checkpoint.keys():
                 if name in k:
                     lora_state_dict[k[len(name) + 1:]] = checkpoint[k] * lora_weight
-            lora_attn_procs[name].load_state_dict(lora_state_dict)
+            lora_attn_procs[name].load_state_dict(lora_state_dict, strict=False)
             lora_attn_procs[name].to(self.device)
 
         self.model.set_attn_processor(lora_attn_procs)
