@@ -2,6 +2,7 @@ import argparse
 import logging
 import math
 import os
+import re
 import random
 import shutil
 from contextlib import nullcontext
@@ -38,7 +39,7 @@ from einops import rearrange
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_t5)
-from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
+from src.flux.modules.layers import DoubleStreamBlockLoraProcessor, SingleStreamBlockLoraProcessor
 
 from image_datasets.dataset import loader
 if is_wandb_available():
@@ -66,8 +67,9 @@ def parse_args():
 
 
     return args.config
-def main():
 
+
+def main():
     args = OmegaConf.load(parse_args())
     is_schnell = args.model_name == "flux-schnell"
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
@@ -105,12 +107,36 @@ def main():
     dit, vae, t5, clip = get_models(name=args.model_name, device=accelerator.device, offload=False, is_schnell=is_schnell)
     lora_attn_procs = {}
 
-    for name, attn_processor in dit.attn_processors.items(): 
-        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(
+    if args.double_blocks is None:
+        double_blocks_idx = list(range(19))
+    else:
+        double_blocks_idx = [int(idx) for idx in args.double_blocks.split(",")]
+
+    if args.single_blocks is None:
+        single_blocks_idx = list(range(38))
+    elif args.single_blocks is not None:
+        single_blocks_idx = [int(idx) for idx in args.single_blocks.split(",")]
+
+    for name, attn_processor in dit.attn_processors.items():
+        match = re.search(r'\.(\d+)\.', name)
+        if match:
+            layer_index = int(match.group(1))
+
+        if name.startswith("double_blocks") and layer_index in double_blocks_idx:
+            print("setting LoRA Processor for", name)
+            lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(
               dim=3072, rank=args.rank
-        ) if name.startswith("double_blocks") else attn_processor
+            )
+        elif name.startswith("single_blocks") and layer_index in single_blocks_idx:
+            print("setting LoRA Processor for", name)
+            lora_attn_procs[name] = SingleStreamBlockLoraProcessor(
+              dim=3072, rank=args.rank
+            )
+        else:
+            lora_attn_procs[name] = attn_processor
+
     dit.set_attn_processor(lora_attn_procs)
-    
+
     vae.requires_grad_(False)
     t5.requires_grad_(False)
     clip.requires_grad_(False)
@@ -289,10 +315,10 @@ def main():
                     # save checkpoint in safetensors format
                     lora_state_dict = {k:unwrapped_model_state[k] for k in unwrapped_model_state.keys() if '_lora' in k}
                     save_file(
-                        lora_state_dict, 
+                        lora_state_dict,
                         os.path.join(save_path, "lora.safetensors")
                     )
-                  
+
                     logger.info(f"Saved state to {save_path}")
 
             logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}

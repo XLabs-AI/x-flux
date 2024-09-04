@@ -24,3 +24,5 @@ tracker_project_name: lora_test
 resume_from_checkpoint: latest
 gradient_accumulation_steps: 2
 rank: 16
+single_blocks: "1,2,3,4"
+double_blocks: null
