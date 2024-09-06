@@ -99,7 +99,7 @@ def create_argparser():
     )
     parser.add_argument(
         "--control_type", type=str, default="canny",
-        choices=("canny", "openpose", "depth", "hed", "hough", "tile"),
+        choices=("canny", "openpose", "depth", "zoe", "hed", "hough", "tile"),
         help="Name of controlnet condition, example: canny"
     )
     parser.add_argument(
