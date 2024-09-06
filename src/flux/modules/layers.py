@@ -459,7 +459,7 @@ class SingleStreamBlockLoraProcessor(nn.Module):
     def __init__(self, dim: int, rank: int = 4, network_alpha = None, lora_weight: float = 1):
         super().__init__()
         self.qkv_lora = LoRALinearLayer(dim, dim * 3, rank, network_alpha)
-        self.proj_lora = LoRALinearLayer(dim, dim, rank, network_alpha)
+        self.proj_lora = LoRALinearLayer(15360, dim, rank, network_alpha)
         self.lora_weight = lora_weight
 
     def forward(self, attn: nn.Module, x: Tensor, vec: Tensor, pe: Tensor) -> Tensor:
@@ -477,7 +477,7 @@ class SingleStreamBlockLoraProcessor(nn.Module):
 
         # compute activation in mlp stream, cat again and run second linear layer
         output = attn.linear2(torch.cat((attn_1, attn.mlp_act(mlp)), 2))
-        output = output + self.proj_lora(output) * self.lora_weight
+        output = output + self.proj_lora(torch.cat((attn_1, attn.mlp_act(mlp)), 2)) * self.lora_weight
         output = x + mod.gate * output
         return output
 
