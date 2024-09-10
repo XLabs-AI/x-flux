@@ -179,16 +179,31 @@ def denoise_controlnet(
     guidance_vec = torch.full((img.shape[0],), guidance, device=img.device, dtype=img.dtype)
     for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
+
+        # move controlnet params to cuda:1
+        img_cuda1 = img.to('cuda:1')
+        img_ids_cuda1 = img_ids.to('cuda:1')
+        controlnet_cond_cuda1 = controlnet_cond.to('cuda:1')
+        txt_cuda1 = txt.to('cuda:1')
+        txt_ids_cuda1 = txt_ids.to('cuda:1')
+        vec_cuda1 = vec.to('cuda:1')
+        t_vec_cuda1 = t_vec.to('cuda:1')
+        guidance_vec_cuda1 = guidance_vec.to('cuda:1')
+
         block_res_samples = controlnet(
-                    img=img,
-                    img_ids=img_ids,
-                    controlnet_cond=controlnet_cond,
-                    txt=txt,
-                    txt_ids=txt_ids,
-                    y=vec,
-                    timesteps=t_vec,
-                    guidance=guidance_vec,
+                    img=img_cuda1,
+                    img_ids=img_ids_cuda1,
+                    controlnet_cond=controlnet_cond_cuda1,
+                    txt=txt_cuda1,
+                    txt_ids=txt_ids_cuda1,
+                    y=vec_cuda1,
+                    timesteps=t_vec_cuda1,
+                    guidance=guidance_vec_cuda1,
                 )
+        
+        # move results back to cuda:0
+        block_res_samples = block_res_samples.to('cuda:0')
+        
         pred = model(
             img=img,
             img_ids=img_ids,
@@ -202,16 +217,25 @@ def denoise_controlnet(
             ip_scale=ip_scale,
         )
         if i >= timestep_to_start_cfg:
+            # move negative prompt to cuda:1
+            neg_txt_cuda1 = neg_txt.to('cuda:1')
+            neg_txt_ids_cuda1 = neg_txt_ids.to('cuda:1')
+            neg_vec_cuda1 = neg_vec.to('cuda:1')
+
             neg_block_res_samples = controlnet(
-                        img=img,
-                        img_ids=img_ids,
-                        controlnet_cond=controlnet_cond,
-                        txt=neg_txt,
-                        txt_ids=neg_txt_ids,
-                        y=neg_vec,
-                        timesteps=t_vec,
-                        guidance=guidance_vec,
+                        img=img_cuda1,
+                        img_ids=img_ids_cuda1,
+                        controlnet_cond=controlnet_cond_cuda1,
+                        txt=neg_txt_cuda1,
+                        txt_ids=neg_txt_ids_cuda1,
+                        y=neg_vec_cuda1,
+                        timesteps=t_vec_cuda1,
+                        guidance=guidance_vec_cuda1,
                     )
+
+            # move results back to cuda:0
+            neg_block_res_samples = neg_block_res_samples.to('cuda:0')
+
             neg_pred = model(
                 img=img,
                 img_ids=img_ids,

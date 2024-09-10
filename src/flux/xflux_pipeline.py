@@ -132,7 +132,9 @@ class XFluxPipeline:
         self.model.set_attn_processor(lora_attn_procs)
 
     def set_controlnet(self, control_type: str, local_path: str = None, repo_id: str = None, name: str = None):
-        self.model.to(self.device)
+        # the model is already on device or will be moved below in the if self.offload block
+        # self.model.to(self.device)
+
         self.controlnet = load_controlnet(self.model_type, "cuda:1").to(torch.bfloat16)
 
         checkpoint = load_checkpoint(local_path, repo_id, name)
