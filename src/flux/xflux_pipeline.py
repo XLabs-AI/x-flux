@@ -133,11 +133,11 @@ class XFluxPipeline:
 
     def set_controlnet(self, control_type: str, local_path: str = None, repo_id: str = None, name: str = None):
         self.model.to(self.device)
-        self.controlnet = load_controlnet(self.model_type, self.device).to(torch.bfloat16)
+        self.controlnet = load_controlnet(self.model_type, "cuda:1").to(torch.bfloat16)
 
         checkpoint = load_checkpoint(local_path, repo_id, name)
         self.controlnet.load_state_dict(checkpoint, strict=False)
-        self.annotator = Annotator(control_type, self.device)
+        self.annotator = Annotator(control_type, "cuda:1")
         self.controlnet_loaded = True
         self.control_type = control_type
 
