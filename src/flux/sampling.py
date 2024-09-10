@@ -202,7 +202,7 @@ def denoise_controlnet(
                 )
         
         # move results back to cuda:0
-        block_res_samples = block_res_samples.to('cuda:0')
+        block_res_samples = [i.to('cuda:0') for i in block_res_samples]
         
         pred = model(
             img=img,
@@ -234,8 +234,8 @@ def denoise_controlnet(
                     )
 
             # move results back to cuda:0
-            neg_block_res_samples = neg_block_res_samples.to('cuda:0')
-
+            neg_block_res_samples = [i.to('cuda:0') for i in neg_block_res_samples]
+            
             neg_pred = model(
                 img=img,
                 img_ids=img_ids,
