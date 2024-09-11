@@ -200,7 +200,7 @@ def main():
                 (1024 // 8) * (1024 // 8) // 4,
                 shift=True,
             )
-  total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+    total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     logger.info("***** Running training *****")
     logger.info(f"  Num Epochs = {args.num_train_epochs}")
