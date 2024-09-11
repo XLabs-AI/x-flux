@@ -195,8 +195,12 @@ def main():
     if accelerator.is_main_process:
         accelerator.init_trackers(args.tracker_project_name, {"test": None})
 
-    timesteps = list(torch.linspace(1, 0, 1000).numpy())
-    total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+    timesteps = get_schedule(
+                999,
+                (1024 // 8) * (1024 // 8) // 4,
+                shift=True,
+            )
+  total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     logger.info("***** Running training *****")
     logger.info(f"  Num Epochs = {args.num_train_epochs}")
@@ -248,12 +252,11 @@ def main():
                     x_1 = rearrange(x_1, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
 
                 bs = img.shape[0]
-                t = torch.sigmoid(torch.randn((bs,), device=accelerator.device))
-
+                t = torch.tensor([timesteps[random.randint(0, 999)]]).to(accelerator.device)
                 x_0 = torch.randn_like(x_1).to(accelerator.device)
                 x_t = (1 - t) * x_1 + t * x_0
                 bsz = x_1.shape[0]
-                guidance_vec = torch.full((x_t.shape[0],), 4, device=x_t.device, dtype=x_t.dtype)
+                guidance_vec = torch.full((x_t.shape[0],), 1, device=x_t.device, dtype=x_t.dtype)
 
                 # Predict the noise residual and compute loss
                 model_pred = dit(img=x_t.to(weight_dtype),
