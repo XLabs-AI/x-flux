@@ -33,12 +33,13 @@ from transformers import CLIPVisionModelWithProjection, CLIPImageProcessor
 class XFluxPipeline:
     def __init__(self, model_type, device, offload: bool = False):
         self.device = torch.device(device)
+        self.device1 = torch.device("cuda:1")
         self.offload = offload
         self.model_type = model_type
 
-        self.clip = load_clip(self.device)
-        self.t5 = load_t5(self.device, max_length=512)
-        self.ae = load_ae(model_type, device="cpu" if offload else self.device)
+        self.clip = load_clip(self.device1)
+        self.t5 = load_t5(self.device1, max_length=512)
+        self.ae = load_ae(model_type, device="cpu" if offload else self.device1)
         if "fp8" in model_type:
             self.model = load_flow_model_quintized(model_type, device="cpu" if offload else self.device)
         else:
