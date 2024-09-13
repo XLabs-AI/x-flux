@@ -339,7 +339,7 @@ class XFluxPipeline:
                 self.offload_model_to_cpu(self.model)
                 self.ae.decoder.to(x.device)
             x = unpack(x.float(), height, width)
-            x = self.ae.decode(x)
+            x = self.ae.decode(x.to(self.device1))
             self.offload_model_to_cpu(self.ae.decoder)
 
         x1 = x.clamp(-1, 1)
