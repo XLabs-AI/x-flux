@@ -131,6 +131,10 @@ def create_argparser():
     parser.add_argument(
         "--save_path", type=str, default='results', help="Path to save"
     )
+    parser.add_argument(
+        "--multi_gpu", action='store_true', default=False,
+        help="Enable multi-GPU support, the transformer will be loaded on the device specified by --device"
+    )
     return parser
 
 
@@ -140,7 +144,7 @@ def main(args):
     else:
         image = None
 
-    xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload)
+    xflux_pipeline = XFluxPipeline(args.model_type, args.device, args.offload, multi_gpu=args.multi_gpu)
     if args.use_ip:
         print('load ip-adapter:', args.ip_local_path, args.ip_repo_id, args.ip_name)
         xflux_pipeline.set_ip(args.ip_local_path, args.ip_repo_id, args.ip_name)
