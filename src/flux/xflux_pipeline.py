@@ -283,6 +283,8 @@ class XFluxPipeline:
         ip_scale=1.0,
         neg_ip_scale=1.0,
     ):
+        print("Starting the diffusion process...")
+
         x = get_noise(
             1, height, width, device=self.model_device,
             dtype=torch.bfloat16, seed=seed
@@ -292,6 +294,9 @@ class XFluxPipeline:
             (width // 8) * (height // 8) // (16 * 16),
             shift=True,
         )
+
+        print("the schedule is:", timesteps)
+
         torch.manual_seed(seed)
         with torch.no_grad():
             if self.offload:
