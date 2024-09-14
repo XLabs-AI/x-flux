@@ -31,7 +31,7 @@ from src.flux.util import (
 from transformers import CLIPVisionModelWithProjection, CLIPImageProcessor
 
 class XFluxPipeline:
-    def __init__(self, model_type, device, offload: bool = False, multi_gpu: bool = False):
+    def __init__(self, model_type, device, offload: bool = False, two_gpus_pipeline: bool = False):
         self.device = torch.device(device)
         self.device1 = torch.device("cuda:1")
         self.offload = offload
