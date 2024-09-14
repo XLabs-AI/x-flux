@@ -295,8 +295,6 @@ class XFluxPipeline:
             shift=True,
         )
 
-        print("the schedule is:", timesteps)
-
         torch.manual_seed(seed)
         with torch.no_grad():
             if self.offload:
