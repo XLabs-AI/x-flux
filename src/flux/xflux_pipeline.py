@@ -284,7 +284,7 @@ class XFluxPipeline:
         neg_ip_scale=1.0,
     ):
         x = get_noise(
-            1, height, width, model_device=self.model_device,
+            1, height, width, device=self.model_device,
             dtype=torch.bfloat16, seed=seed
         )
         timesteps = get_schedule(
