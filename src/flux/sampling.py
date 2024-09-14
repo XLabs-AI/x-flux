@@ -172,7 +172,9 @@ def denoise_controlnet(
     image_proj: Tensor=None, 
     neg_image_proj: Tensor=None, 
     ip_scale: Tensor | float = 1, 
-    neg_ip_scale: Tensor | float = 1, 
+    neg_ip_scale: Tensor | float = 1,
+    controlnet_device: torch.device = "cuda:0",
+    model_device: torch.device = "cuda:0"
 ):
     # this is ignored for schnell
     i = 0
@@ -181,14 +183,14 @@ def denoise_controlnet(
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
 
         # move controlnet params to controlnet's device
-        img_controlnet_device = img.to(controlnet.device)
-        img_ids_controlnet_device = img_ids.to(controlnet.device)
-        controlnet_cond_controlnet_device = controlnet_cond.to(controlnet.device)
-        txt_controlnet_device = txt.to(controlnet.device)
-        txt_ids_controlnet_device = txt_ids.to(controlnet.device)
-        vec_controlnet_device = vec.to(controlnet.device)
-        t_vec_controlnet_device = t_vec.to(controlnet.device)
-        guidance_vec_controlnet_device = guidance_vec.to(controlnet.device)
+        img_controlnet_device = img.to(controlnet_device)
+        img_ids_controlnet_device = img_ids.to(controlnet_device)
+        controlnet_cond_controlnet_device = controlnet_cond.to(controlnet_device)
+        txt_controlnet_device = txt.to(controlnet_device)
+        txt_ids_controlnet_device = txt_ids.to(controlnet_device)
+        vec_controlnet_device = vec.to(controlnet_device)
+        t_vec_controlnet_device = t_vec.to(controlnet_device)
+        guidance_vec_controlnet_device = guidance_vec.to(controlnet_device)
 
         block_res_samples = controlnet(
                     img=img_controlnet_device,
@@ -202,7 +204,7 @@ def denoise_controlnet(
                 )
         
         # move results back to model's device
-        block_res_samples = [i.to(model.device) for i in block_res_samples]
+        block_res_samples = [i.to(model_device) for i in block_res_samples]
         
         pred = model(
             img=img,
@@ -218,9 +220,9 @@ def denoise_controlnet(
         )
         if i >= timestep_to_start_cfg:
             # move negative prompt to controlnet's device
-            neg_txt_controlnet_device = neg_txt.to(controlnet.device)
-            neg_txt_ids_controlnet_device = neg_txt_ids.to(controlnet.device)
-            neg_vec_controlnet_device = neg_vec.to(controlnet.device)
+            neg_txt_controlnet_device = neg_txt.to(controlnet_device)
+            neg_txt_ids_controlnet_device = neg_txt_ids.to(controlnet_device)
+            neg_vec_controlnet_device = neg_vec.to(controlnet_device)
 
             neg_block_res_samples = controlnet(
                         img=img_controlnet_device,
@@ -234,7 +236,7 @@ def denoise_controlnet(
                     )
 
             # move results back to model's device
-            neg_block_res_samples = [i.to(model.device) for i in neg_block_res_samples]
+            neg_block_res_samples = [i.to(model_device) for i in neg_block_res_samples]
             
             neg_pred = model(
                 img=img,

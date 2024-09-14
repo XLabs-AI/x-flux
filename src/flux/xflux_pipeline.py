@@ -323,6 +323,8 @@ class XFluxPipeline:
                     neg_image_proj=neg_image_proj,
                     ip_scale=ip_scale,
                     neg_ip_scale=neg_ip_scale,
+                    controlnet_device=self.other_device,
+                    model_device=self.model_device,
                 )
             else:
                 x = denoise(
