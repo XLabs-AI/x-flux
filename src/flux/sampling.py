@@ -201,8 +201,8 @@ def denoise_controlnet(
                     guidance=guidance_vec_cuda1,
                 )
         
-        # move results back to cuda:0
-        block_res_samples = [i.to('cuda:0') for i in block_res_samples]
+        # move results back to model's device
+        block_res_samples = [i.to(model.device) for i in block_res_samples]
         
         pred = model(
             img=img,
@@ -233,8 +233,8 @@ def denoise_controlnet(
                         guidance=guidance_vec_cuda1,
                     )
 
-            # move results back to cuda:0
-            neg_block_res_samples = [i.to('cuda:0') for i in neg_block_res_samples]
+            # move results back to model's device
+            neg_block_res_samples = [i.to(model.device) for i in neg_block_res_samples]
             
             neg_pred = model(
                 img=img,
