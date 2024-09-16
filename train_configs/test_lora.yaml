@@ -4,6 +4,7 @@ data_config:
   num_workers: 4
   img_size: 512
   img_dir: images/
+  random_ratio: true # support multi crop preprocessing
 report_to: wandb
 train_batch_size: 1
 output_dir: lora/
