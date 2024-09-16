@@ -26,3 +26,11 @@ gradient_accumulation_steps: 2
 rank: 16
 single_blocks: "1,2,3,4"
 double_blocks: null
+disable_sampling: false
+sample_every: 250 # sample every this many steps
+sample_width: 1024
+sample_height: 1024
+sample_steps: 20
+sample_prompts:
+    - "woman with red hair, playing chess at the park, bomb going off in the background"
+    - "a woman holding a coffee cup, in a beanie, sitting at a cafe"
