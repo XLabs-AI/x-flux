@@ -2,6 +2,7 @@ import argparse
 import logging
 import math
 import os
+import re
 import random
 import shutil
 from contextlib import nullcontext
@@ -38,7 +39,8 @@ from einops import rearrange
 from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_t5)
-from src.flux.modules.layers import DoubleStreamBlockLoraProcessor
+from src.flux.modules.layers import DoubleStreamBlockLoraProcessor, SingleStreamBlockLoraProcessor
+from src.flux.xflux_pipeline import XFluxSampler
 
 from image_datasets.dataset import loader
 if is_wandb_available():
@@ -66,8 +68,9 @@ def parse_args():
 
 
     return args.config
-def main():
 
+
+def main():
     args = OmegaConf.load(parse_args())
     is_schnell = args.model_name == "flux-schnell"
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
@@ -105,12 +108,36 @@ def main():
     dit, vae, t5, clip = get_models(name=args.model_name, device=accelerator.device, offload=False, is_schnell=is_schnell)
     lora_attn_procs = {}
 
-    for name, attn_processor in dit.attn_processors.items(): 
-        lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(
+    if args.double_blocks is None:
+        double_blocks_idx = list(range(19))
+    else:
+        double_blocks_idx = [int(idx) for idx in args.double_blocks.split(",")]
+
+    if args.single_blocks is None:
+        single_blocks_idx = list(range(38))
+    elif args.single_blocks is not None:
+        single_blocks_idx = [int(idx) for idx in args.single_blocks.split(",")]
+
+    for name, attn_processor in dit.attn_processors.items():
+        match = re.search(r'\.(\d+)\.', name)
+        if match:
+            layer_index = int(match.group(1))
+
+        if name.startswith("double_blocks") and layer_index in double_blocks_idx:
+            print("setting LoRA Processor for", name)
+            lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(
               dim=3072, rank=args.rank
-        ) if name.startswith("double_blocks") else attn_processor
+            )
+        elif name.startswith("single_blocks") and layer_index in single_blocks_idx:
+            print("setting LoRA Processor for", name)
+            lora_attn_procs[name] = SingleStreamBlockLoraProcessor(
+              dim=3072, rank=args.rank
+            )
+        else:
+            lora_attn_procs[name] = attn_processor
+
     dit.set_attn_processor(lora_attn_procs)
-    
+
     vae.requires_grad_(False)
     t5.requires_grad_(False)
     clip.requires_grad_(False)
@@ -169,7 +196,11 @@ def main():
     if accelerator.is_main_process:
         accelerator.init_trackers(args.tracker_project_name, {"test": None})
 
-    timesteps = list(torch.linspace(1, 0, 1000).numpy())
+    timesteps = get_schedule(
+                999,
+                (1024 // 8) * (1024 // 8) // 4,
+                shift=True,
+            )
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     logger.info("***** Running training *****")
@@ -222,12 +253,11 @@ def main():
                     x_1 = rearrange(x_1, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
 
                 bs = img.shape[0]
-                t = torch.sigmoid(torch.randn((bs,), device=accelerator.device))
-
+                t = torch.tensor([timesteps[random.randint(0, 999)]]).to(accelerator.device)
                 x_0 = torch.randn_like(x_1).to(accelerator.device)
                 x_t = (1 - t) * x_1 + t * x_0
                 bsz = x_1.shape[0]
-                guidance_vec = torch.full((x_t.shape[0],), 4, device=x_t.device, dtype=x_t.dtype)
+                guidance_vec = torch.full((x_t.shape[0],), 1, device=x_t.device, dtype=x_t.dtype)
 
                 # Predict the noise residual and compute loss
                 model_pred = dit(img=x_t.to(weight_dtype),
@@ -259,6 +289,21 @@ def main():
                 accelerator.log({"train_loss": train_loss}, step=global_step)
                 train_loss = 0.0
 
+                if not args.disable_sampling and global_step % args.sample_every == 0:
+                    print(f"Sampling images for step {global_step}...")
+                    sampler = XFluxSampler(clip=clip, t5=t5, ae=vae, model=dit, device=accelerator.device)
+                    images = []
+                    for i, prompt in enumerate(args.sample_prompts):
+                        result = sampler(prompt=prompt,
+                                         width=args.sample_width,
+                                         height=args.sample_height,
+                                         num_steps=args.sample_steps
+                                         )
+                        images.append(wandb.Image(result))
+                        print(f"Result for prompt #{i} is generated")
+                        # result.save(f"{global_step}_prompt_{i}_res.png")
+                    wandb.log({f"Results, step {global_step}": images})
+
                 if global_step % args.checkpointing_steps == 0:
                     if accelerator.is_main_process:
                         # _before_ saving state, check if this save would set us over the `checkpoints_total_limit`
@@ -289,10 +334,10 @@ def main():
                     # save checkpoint in safetensors format
                     lora_state_dict = {k:unwrapped_model_state[k] for k in unwrapped_model_state.keys() if '_lora' in k}
                     save_file(
-                        lora_state_dict, 
+                        lora_state_dict,
                         os.path.join(save_path, "lora.safetensors")
                     )
-                  
+
                     logger.info(f"Saved state to {save_path}")
 
             logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}

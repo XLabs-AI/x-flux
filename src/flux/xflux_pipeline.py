@@ -9,6 +9,8 @@ import os
 
 from src.flux.modules.layers import (
     SingleStreamBlockProcessor,
+    DoubleStreamBlockProcessor,
+    SingleStreamBlockLoraProcessor,
     DoubleStreamBlockLoraProcessor,
     IPDoubleStreamBlockProcessor,
     ImageProjModel,
@@ -109,16 +111,23 @@ class XFluxPipeline:
         lora_attn_procs = {}
 
         for name, _ in self.model.attn_processors.items():
-            if name.startswith("single_blocks"):
-                lora_attn_procs[name] = SingleStreamBlockProcessor()
-                continue
-            lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=rank)
             lora_state_dict = {}
             for k in checkpoint.keys():
                 if name in k:
                     lora_state_dict[k[len(name) + 1:]] = checkpoint[k] * lora_weight
-            lora_attn_procs[name].load_state_dict(lora_state_dict)
-            lora_attn_procs[name].to(self.device)
+
+            if len(lora_state_dict):
+                if name.startswith("single_blocks"):
+                    lora_attn_procs[name] = SingleStreamBlockLoraProcessor(dim=3072, rank=rank)
+                else:
+                    lora_attn_procs[name] = DoubleStreamBlockLoraProcessor(dim=3072, rank=rank)
+                lora_attn_procs[name].load_state_dict(lora_state_dict)
+                lora_attn_procs[name].to(self.device)
+            else:
+                if name.startswith("single_blocks"):
+                    lora_attn_procs[name] = SingleStreamBlockProcessor()
+                else:
+                    lora_attn_procs[name] = DoubleStreamBlockProcessor()
 
         self.model.set_attn_processor(lora_attn_procs)
 
@@ -340,3 +349,16 @@ class XFluxPipeline:
         for model in models:
             model.cpu()
             torch.cuda.empty_cache()
+
+
+class XFluxSampler(XFluxPipeline):
+    def __init__(self, clip, t5, ae, model, device):
+        self.clip = clip
+        self.t5 = t5
+        self.ae = ae
+        self.model = model
+        self.model.eval()
+        self.device = device
+        self.controlnet_loaded = False
+        self.ip_loaded = False
+        self.offload = False

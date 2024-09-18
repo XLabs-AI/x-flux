@@ -22,6 +22,7 @@ from .annotator.canny import CannyDetector
 from .annotator.midas import MidasDetector
 from .annotator.hed import HEDdetector
 from .annotator.tile import TileDetector
+from .annotator.zoe import ZoeDetector
 
 
 def load_safetensors(path):
@@ -124,6 +125,8 @@ class Annotator:
             processor = MLSDdetector()
         elif name == "tile":
             processor = TileDetector()
+        elif name == "zoe":
+            processor = ZoeDetector()
         self.name = name
         self.processor = processor
 
