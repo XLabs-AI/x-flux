@@ -38,6 +38,7 @@ from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_controlnet, load_t5)
 from image_datasets.canny_dataset import loader
+from image_datasets.openpose_dataset import openpose_dataset_loader
 if is_wandb_available():
     import wandb
 logger = get_logger(__name__, log_level="INFO")
@@ -122,7 +123,11 @@ def main():
         eps=args.adam_epsilon,
     )
 
-    train_dataloader = loader(**args.data_config)
+    if args.is_openpose:
+        train_dataloader = openpose_dataset_loader(**args.data_config)
+    else:
+        train_dataloader = loader(**args.data_config)
+
     # Scheduler and math around the number of training steps.
     overrode_max_train_steps = False
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)

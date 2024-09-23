@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import json
 import random
-import cv2
 
 def c_crop(image):
     width, height = image.size
@@ -19,6 +18,7 @@ def c_crop(image):
 
 class OpenPoseImageDataset(Dataset):
     def __init__(self, img_dir, img_size=512):
+        self.img_dir = img_dir
         self.images = [os.path.join(img_dir, i) for i in os.listdir(img_dir) if '.jpg' in i or '.png' in i]
         self.images.sort()
         self.img_size = img_size
@@ -39,15 +39,16 @@ class OpenPoseImageDataset(Dataset):
             img = torch.from_numpy((np.array(img) / 127.5) - 1)
             img = img.permute(2, 0, 1)
 
-            json_path = self.images[idx].split('.')[0] + '.json'
-            json_data = json.load(open(json_path))
-            hint_path = json_data['conditioning_image']
+            hint_path = os.path.join(self.img_dir, json_data['conditioning_image'])
             hint = Image.open(hint_path)
+            hint = c_crop(hint)
+            hint = hint.resize((self.img_size, self.img_size))
             hint = torch.from_numpy((np.array(hint) / 127.5) - 1)
             hint = hint.permute(2, 0, 1)
             
             prompt = json_data['caption']
             return img, hint, prompt
+
         except Exception as e:
             print(e)
             return self.__getitem__(random.randint(0, len(self.images) - 1))
