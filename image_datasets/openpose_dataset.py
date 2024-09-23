@@ -36,6 +36,9 @@ class OpenPoseImageDataset(Dataset):
             img = Image.open(self.images[idx])
             img = c_crop(img)
             img = img.resize((self.img_size, self.img_size))
+            # support gray scale images as well
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
             img = torch.from_numpy((np.array(img) / 127.5) - 1)
             img = img.permute(2, 0, 1)
 
