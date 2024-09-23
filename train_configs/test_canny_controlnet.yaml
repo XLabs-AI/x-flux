@@ -1,5 +1,4 @@
 model_name: "flux-dev"
-is_openpose: true
 data_config:
   train_batch_size: 4
   num_workers: 4
