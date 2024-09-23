@@ -224,7 +224,7 @@ def main():
                 t = torch.sigmoid(torch.randn((bs,), device=accelerator.device))
 
                 x_0 = torch.randn_like(x_1).to(accelerator.device)
-                print(t.shape, x_1.shape, x_0.shape)
+                # print(t.shape, x_1.shape, x_0.shape)
                 x_t = (1 - t.unsqueeze(1).unsqueeze(2).repeat(1, x_1.shape[1], x_1.shape[2])) * x_1 + t.unsqueeze(1).unsqueeze(2).repeat(1, x_1.shape[1], x_1.shape[2]) * x_0
                 bsz = x_1.shape[0]
                 guidance_vec = torch.full((x_t.shape[0],), 4, device=x_t.device, dtype=x_t.dtype)

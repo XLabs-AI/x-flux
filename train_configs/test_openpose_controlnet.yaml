@@ -20,7 +20,7 @@ max_grad_norm: 1.0
 logging_dir: logs
 mixed_precision: "bf16"
 checkpointing_steps: 2500
-checkpoints_total_limit: 10
+checkpoints_total_limit: 50
 tracker_project_name: openpose_training
 resume_from_checkpoint: latest
 gradient_accumulation_steps: 2
