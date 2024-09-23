@@ -1,8 +1,8 @@
 model_name: "flux-dev"
 is_openpose: true
 data_config:
-  train_batch_size: 4
-  num_workers: 4
+  train_batch_size: 2
+  num_workers: 2
   img_size: 512
   img_dir: images/
 report_to: wandb
