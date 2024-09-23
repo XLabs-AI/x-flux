@@ -29,7 +29,7 @@ def c_crop(image):
 
 class CustomImageDataset(Dataset):
     def __init__(self, img_dir, img_size=512):
-        self.images = [os.path.join(img_dir, i) for i in os.listdir(img_dir) if ('.jpg' in i or '.png' in i) and not i.endswith('_pose.jpg') and not i.endswith('_pose.png')]
+        self.images = [os.path.join(img_dir, i) for i in os.listdir(img_dir) if '.jpg' in i or '.png' in i]
         self.images.sort()
         self.img_size = img_size
 
