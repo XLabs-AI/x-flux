@@ -230,5 +230,9 @@ class PrepareForNet(object):
         if "depth" in sample:
             depth = sample["depth"].astype(np.float32)
             sample["depth"] = np.ascontiguousarray(depth)
+        
+        if "depthanythingv2" in sample:
+            depthanythingv2 = sample["depthanythingv2"].astype(np.float32)
+            sample["depthanythingv2"] = np.ascontiguousarray(depthanythingv2)
 
         return sample
