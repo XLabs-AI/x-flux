@@ -360,3 +360,16 @@ class XFluxPipeline:
         for model in models:
             model.cpu()
             torch.cuda.empty_cache()
+
+
+class XFluxSampler(XFluxPipeline):
+    def __init__(self, clip, t5, ae, model, device):
+        self.clip = clip
+        self.t5 = t5
+        self.ae = ae
+        self.model = model
+        self.model.eval()
+        self.device = device
+        self.controlnet_loaded = False
+        self.ip_loaded = False
+        self.offload = False

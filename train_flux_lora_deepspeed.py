@@ -40,6 +40,7 @@ from src.flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from src.flux.util import (configs, load_ae, load_clip,
                        load_flow_model2, load_t5)
 from src.flux.modules.layers import DoubleStreamBlockLoraProcessor, SingleStreamBlockLoraProcessor
+from src.flux.xflux_pipeline import XFluxSampler
 
 from image_datasets.dataset import loader
 if is_wandb_available():
@@ -195,7 +196,11 @@ def main():
     if accelerator.is_main_process:
         accelerator.init_trackers(args.tracker_project_name, {"test": None})
 
-    timesteps = list(torch.linspace(1, 0, 1000).numpy())
+    timesteps = get_schedule(
+                999,
+                (1024 // 8) * (1024 // 8) // 4,
+                shift=True,
+            )
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     logger.info("***** Running training *****")
@@ -248,12 +253,11 @@ def main():
                     x_1 = rearrange(x_1, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
 
                 bs = img.shape[0]
-                t = torch.sigmoid(torch.randn((bs,), device=accelerator.device))
-
+                t = torch.tensor([timesteps[random.randint(0, 999)]]).to(accelerator.device)
                 x_0 = torch.randn_like(x_1).to(accelerator.device)
                 x_t = (1 - t) * x_1 + t * x_0
                 bsz = x_1.shape[0]
-                guidance_vec = torch.full((x_t.shape[0],), 4, device=x_t.device, dtype=x_t.dtype)
+                guidance_vec = torch.full((x_t.shape[0],), 1, device=x_t.device, dtype=x_t.dtype)
 
                 # Predict the noise residual and compute loss
                 model_pred = dit(img=x_t.to(weight_dtype),
@@ -284,6 +288,22 @@ def main():
                 global_step += 1
                 accelerator.log({"train_loss": train_loss}, step=global_step)
                 train_loss = 0.0
+
+                if not args.disable_sampling and global_step % args.sample_every == 0:
+                    if accelerator.is_main_process:
+                        print(f"Sampling images for step {global_step}...")
+                        sampler = XFluxSampler(clip=clip, t5=t5, ae=vae, model=dit, device=accelerator.device)
+                        images = []
+                        for i, prompt in enumerate(args.sample_prompts):
+                            result = sampler(prompt=prompt,
+                                             width=args.sample_width,
+                                             height=args.sample_height,
+                                             num_steps=args.sample_steps
+                                             )
+                            images.append(wandb.Image(result))
+                            print(f"Result for prompt #{i} is generated")
+                            # result.save(f"{global_step}_prompt_{i}_res.png")
+                        wandb.log({f"Results, step {global_step}": images})
 
                 if global_step % args.checkpointing_steps == 0:
                     if accelerator.is_main_process:
