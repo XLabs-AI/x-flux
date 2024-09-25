@@ -143,7 +143,7 @@ class XFluxPipeline:
 
         checkpoint = load_checkpoint(local_path, repo_id, name)
         self.controlnet.load_state_dict(checkpoint, strict=False)
-        self.annotator = Annotator(control_type, "cuda:1")
+        self.annotator = Annotator(control_type, self.other_device)
         self.controlnet_loaded = True
         self.control_type = control_type
 
