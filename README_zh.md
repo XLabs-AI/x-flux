@@ -2,10 +2,10 @@
 
 <a href='https://replicate.com/lucataco/flux-controlnet'><img src='https://replicate.com/lucataco/flux-controlnet/badge'></a>
 
-English / [中文](/README_zh.md)
+[English](/README.md) / 中文
 
-This repository provides training scripts for [Flux model](https://github.com/black-forest-labs/flux) by Black Forest Labs. <br/>
-[XLabs AI](https://github.com/XLabs-AI) team is happy to publish fune-tuning Flux scripts, including:
+此仓库提供了用于 Black Forest Labs 提出的 [Flux](https://github.com/black-forest-labs/flux) 模型。<br/>
+[XLabs AI](https://github.com/XLabs-AI) 团队非常高兴能发布 Flux 的微调脚本，支持的功能包括:
 
 - **LoRA** 🔥
 - **ControlNet** 🔥
@@ -13,37 +13,39 @@ This repository provides training scripts for [Flux model](https://github.com/bl
 
 # ComfyUI
 
-[See our github](https://github.com/XLabs-AI/x-flux-comfyui) for comfy ui workflows.
+查看我们的 [ComfyUI 工作流GitHub](https://github.com/XLabs-AI/x-flux-comfyui)。
 ![Example Picture 1](https://github.com/XLabs-AI/x-flux-comfyui/blob/main/assets/image1.png?raw=true)
 
-## Requirements
+## 环境要求
 1. Python >= 3.10
 2. PyTorch >= 2.1
-3. HuggingFace CLI is required to download our models: ```huggingface-cli login```
-# Installation Guide
-1. Clone our repo:
+3. 需要 HuggingFace CLI 用于下载我们的模型: ```huggingface-cli login```
+
+# 安装指南
+1. 克隆我们的仓库:
 ```bash
 git clone https://github.com/XLabs-AI/x-flux.git
 ```
-2. Create new virtual environment:
+2. 创建新的虚拟环境:
 ```bash
 python3 -m venv xflux_env
 source xflux_env/bin/activate
 ```
-3. Install our dependencies by running the following command:
+3. 通过执行以下指令安装我们需要的依赖:
 ```bash
+cd x-flux
 pip install -r requirements.txt
 ```
 
-# Training
+# 训练
 
-We trained LoRA and ControlNet models using [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
-It's available for 1024x1024 resolution!
+我们训练 LoRA 和 ControlNet 模型的脚本用到了 [DeepSpeed](https://github.com/microsoft/DeepSpeed)! <br/>
+这可以支持 1024x1024 分辨率的数据!
 
-## Models
+## 模型
 
-We trained **IP-Adapter**, **Canny ControlNet**, **Depth ControlNet**, **HED ControlNet** and **LoRA** checkpoints for [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) <br/>
-You can download them on HuggingFace:
+我们训练了适用于 [`FLUX.1 [dev]`](https://github.com/black-forest-labs/flux) 的 **IP-Adapter**，**Canny ControlNet**，**Depth ControlNet**，**HED ControlNet** 和**LoRA** 模型文件。<br/>
+你可以通过 Hugging Face下载它们。
 
 - [flux-ip-adapter](https://huggingface.co/XLabs-AI/flux-ip-adapter)
 - [flux-controlnet-collections](https://huggingface.co/XLabs-AI/flux-controlnet-collections)
@@ -52,7 +54,8 @@ You can download them on HuggingFace:
 - [flux-lora-collections](https://huggingface.co/XLabs-AI/flux-lora-collection)
 - [flux-furry-lora](https://huggingface.co/XLabs-AI/flux-furry-lora)
 
-Also, our models are avaiable at [civit.ai](https://civitai.com/user/xlabs_ai)
+同时, 我们的模型也可以在 [civit.ai](https://civitai.com/user/xlabs_ai) 访问。
+
 ### LoRA
 
 ```bash
@@ -65,9 +68,9 @@ accelerate launch train_flux_lora_deepspeed.py --config "train_configs/test_lora
 accelerate launch train_flux_deepspeed_controlnet.py --config "train_configs/test_canny_controlnet.yaml"
 ```
 
-## Training Dataset
+## 训练数据集
 
-Dataset has the following format for the training process:
+训练数据集应当具有以下格式：
 
 ```text
 ├── images/
@@ -78,9 +81,9 @@ Dataset has the following format for the training process:
 │    ├── ...
 ```
 
-### Example `images/*.json` file
+### `images/*.json` 文件的示例
 
-A `.json` file contains "caption" field with a text prompt.
+一个 `.json` 文件包括 "caption" 信息 with a text prompt.
 
 ```json
 {
@@ -88,19 +91,20 @@ A `.json` file contains "caption" field with a text prompt.
 }
 ```
 
-## Inference
+## 推理
 
-To test our checkpoints, you can use several options:
-1. Launch adapters in ComfyUI with our workflows, [see our repo](https://github.com/XLabs-AI/x-flux-comfyui) for more details
-2. Use main.py script with CLI commands
-3. Use Gradio demo with simple UI
+为了测试我们的模型，你有以下选项:
+1. 在我们的ComfyUI 工作流启动 adapters, [查看我们的仓库](https://github.com/XLabs-AI/x-flux-comfyui) for more details
+2. 使用 `main.py` 在 CLI 命令行
+3. 使用 Gradio demo UI
 
 ### Gradio
-Launch gradio as follows:
+可以按照以下指令启动 gradio:
 ```
 python3 gradio_demo.py --ckpt_dir model_weights
 ```
-Define `--ckpt_dir` as the folder location with the downloaded XLabs AI adapter weights (LoRAs, IP-adapter, ControlNets)
+ `--ckpt_dir` 是下载 XLabs AI adapter 模型权重 (LoRAs, IP-adapter, ControlNets) 的位置。
+ 
 ### IP-Adapter
 ```bash
 python3 main.py \
@@ -188,6 +192,7 @@ python3 main.py \
 ```
 ![Example Picture 2](./assets/readme/examples/depth_result2.png?raw=true)
 
+
 ## HED ControlNet V3
 ```bash
  python3 main.py \
@@ -201,19 +206,19 @@ python3 main.py \
 ```
 ![Example Picture 2](./assets/readme/examples/hed_result1.png?raw=true)
 
-## Low memory mode
+## 低显存模式
 
-Use quantized version [Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) to achieve lower VRAM usage (22 GB) with `--offload` and `--model_type flux-dev-fp8` settings:
+基于[Flux-dev-F8](https://huggingface.co/XLabs-AI/flux-dev-fp8) 模型，训练 LoRA 和 Controlnet FP8 版本，可以通过 `--offload` 和  `--name flux-dev-fp8` 设置来实现低显存的使用 (22 GB):
 ```bash
 python3 main.py \
- --offload --model_type flux-dev-fp8 \
-  --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
- --guidance 4 \
- --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol"
+    --offload --name flux-dev-fp8 \
+    --lora_repo_id XLabs-AI/flux-lora-collection --lora_name realism_lora.safetensors \
+    --guidance 4 \
+    --prompt "A handsome girl in a suit covered with bold tattoos and holding a pistol. Animatrix illustration style, fantasy style, natural photo cinematic"
 ```
 ![Example Picture 0](./assets/readme/examples/picture-0-rev1.png)
 
-## Accelerate Configuration Example
+## 加速设置的示例
 
 ```yaml
 compute_environment: LOCAL_MACHINE
@@ -241,13 +246,13 @@ tpu_use_sudo: false
 use_cpu: false
 
 ```
-## Models Licence
+## 模型许可证书
 
-Our models fall under the [FLUX.1 [dev] Non-Commercial License](https://github.com/black-forest-labs/flux/blob/main/model_licenses/LICENSE-FLUX1-dev) <br/> Our training and infer scripts under the Apache 2 License
+我们的模型在 [FLUX.1 [dev] Non-Commercial License](https://github.com/black-forest-labs/flux/blob/main/model_licenses/LICENSE-FLUX1-dev) 之下 <br/> 但是，我们的训练和推理脚本在 Apache 2 协议下。
 
-## Near Updates
+## 最近的更新
 
-We are working on releasing new ControlNet weight models for Flux: **OpenPose**, **Depth** and more! <br/>
-Stay tuned with [XLabs AI](https://github.com/XLabs-AI) to see **IP-Adapters** for Flux.
+我们发布了新的 适合于Flux的 ControlNet 模型权重: **OpenPose**, **Depth** 和其他! <br/>
+继续训练和调整可以参考 [XLabs AI](https://github.com/XLabs-AI) 的 **IP-Adapters** 应对Flux的部分.
 
-![Follow Our Updates](./assets/readme/dark/follow-cta-rev2.png)
+![关注我们的持续更新](./assets/readme/dark/follow-cta-rev2.png)
