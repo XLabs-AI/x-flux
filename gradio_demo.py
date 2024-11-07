@@ -125,13 +125,13 @@ def create_demo(
                         with gr.Row():
                             width = gr.Slider(512, 2048, 1024, step=16, label="Width")
                             height = gr.Slider(512, 2048, 1024, step=16, label="Height")
-                        neg_prompt = gr.Textbox(label="Negative Prompt", value="bad photo")
+                        neg_prompt = gr.Textbox(label="Negative Prompt", value="")
                         with gr.Row():
                             num_steps = gr.Slider(1, 50, 25, step=1, label="Number of steps")
                             timestep_to_start_cfg = gr.Slider(1, 50, 1, step=1, label="timestep_to_start_cfg")
                         with gr.Row():
-                            guidance = gr.Slider(1.0, 5.0, 4.0, step=0.1, label="Guidance", interactive=True)
-                            true_gs = gr.Slider(1.0, 5.0, 3.5, step=0.1, label="True Guidance", interactive=True)
+                            guidance = gr.Slider(1.0, 5.0, 3.5, step=0.1, label="Guidance", interactive=True)
+                            true_gs = gr.Slider(1.0, 5.0, 1.0, step=0.1, label="True Guidance", interactive=True)
                         seed = gr.Textbox(-1, label="Seed (-1 for random)")
 
                     with gr.Accordion("ControlNet Options", open=False):
@@ -150,12 +150,17 @@ def create_demo(
 
                     with gr.Accordion("IP Adapter Options", open=False):
                         image_prompt = gr.Image(label="image_prompt", visible=True, interactive=True)
-                        ip_scale = gr.Slider(0.0, 1.0, 1.0, step=0.1, label="ip_scale")
+                        ip_scale = gr.Slider(0.0, 1.0, 1.0, step=0.01, label="ip_scale")
                         neg_image_prompt = gr.Image(label="neg_image_prompt", visible=True, interactive=True)
-                        neg_ip_scale = gr.Slider(0.0, 1.0, 1.0, step=0.1, label="neg_ip_scale")
+                        neg_ip_scale = gr.Slider(0.0, 1.0, 1.0, step=0.01, label="neg_ip_scale")
+                        
+                        ip_checkpoints = checkpoints + [
+                            "XLabs-AI/flux-ip-adapter-v2",
+                            "XLabs-AI/flux-ip-adapter",
+                        ]
                         ip_local_path = gr.Dropdown(
-                            checkpoints, label="IP Adapter Checkpoint",
-                            info="Local Path to IP Adapter weights (if no, it will be downloaded from HF)"
+                            ip_checkpoints, label="IP Adapter Checkpoint",
+                            info="Local Path to IP Adapter weights (if no, it will be downloaded from HF)", 
                             )
                     generate_btn = gr.Button("Generate")
 
@@ -163,11 +168,12 @@ def create_demo(
                     output_image = gr.Image(label="Generated Image")
                     download_btn = gr.File(label="Download full-resolution")
 
-            inputs = [prompt, image_prompt, controlnet_image, width, height, guidance,
-                    num_steps, seed, true_gs, ip_scale, neg_ip_scale, neg_prompt,
-                    neg_image_prompt, timestep_to_start_cfg, control_type, control_weight,
-                    lora_weight, local_path, lora_local_path, ip_local_path
-                    ]
+            inputs = [
+                prompt, image_prompt, controlnet_image, width, height, guidance,
+                num_steps, seed, true_gs, ip_scale, neg_ip_scale, neg_prompt,
+                neg_image_prompt, timestep_to_start_cfg, control_type, control_weight,
+                lora_weight, local_path, lora_local_path, ip_local_path
+            ]
             generate_btn.click(
                 fn=xflux_pipeline.gradio_generate,
                 inputs=inputs,

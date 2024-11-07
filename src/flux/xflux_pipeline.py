@@ -67,6 +67,8 @@ class XFluxPipeline:
             if key.startswith("ip_adapter_proj_model"):
                 proj[key[len("ip_adapter_proj_model."):]] = value
 
+        num_ip_tokens = checkpoint['ip_adapter_proj_model.proj.weight'].shape[0]//4096
+
         # load image encoder
         self.image_encoder = CLIPVisionModelWithProjection.from_pretrained(self.image_encoder_path).to(
             self.device, dtype=torch.float16
@@ -74,7 +76,7 @@ class XFluxPipeline:
         self.clip_image_processor = CLIPImageProcessor()
 
         # setup image embedding projection model
-        self.improj = ImageProjModel(4096, 768, 4)
+        self.improj = ImageProjModel(4096, 768, num_ip_tokens)
         self.improj.load_state_dict(proj)
         self.improj = self.improj.to(self.device, dtype=torch.bfloat16)
 
@@ -93,7 +95,11 @@ class XFluxPipeline:
                 ip_attn_procs[name] = self.model.attn_processors[name]
 
         self.model.set_attn_processor(ip_attn_procs)
-        self.ip_loaded = True
+
+        if local_path: 
+            self.ip_loaded = local_path
+        else: 
+            self.ip_loaded = repo_id
 
     def set_lora(self, local_path: str = None, repo_id: str = None,
                  name: str = None, lora_weight: int = 0.7):
@@ -181,22 +187,36 @@ class XFluxPipeline:
         height = 16 * (height // 16)
         image_proj = None
         neg_image_proj = None
-        if not (image_prompt is None and neg_image_prompt is None) :
-            assert self.ip_loaded, 'You must setup IP-Adapter to add image prompt as input'
 
+        if self.ip_loaded:
             if image_prompt is None:
                 image_prompt = np.zeros((width, height, 3), dtype=np.uint8)
+                ip_scale = 0 
             if neg_image_prompt is None:
                 neg_image_prompt = np.zeros((width, height, 3), dtype=np.uint8)
+                neg_ip_scale = 0
 
             image_proj = self.get_image_proj(image_prompt)
             neg_image_proj = self.get_image_proj(neg_image_prompt)
-
+        
         if self.controlnet_loaded:
-            controlnet_image = self.annotator(controlnet_image, width, height)
-            controlnet_image = torch.from_numpy((np.array(controlnet_image) / 127.5) - 1)
-            controlnet_image = controlnet_image.permute(
-                2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(self.device)
+            if controlnet_image is None: 
+                controlnet_image = torch.zeros(
+                    (1, 3, height, width), 
+                    dtype=torch.bfloat16, 
+                    device=self.device
+                )
+                control_weight = 0
+            else:
+                controlnet_image = self.annotator(controlnet_image, width, height)
+                controlnet_image = torch.from_numpy((controlnet_image / 127.5) - 1)
+                controlnet_image = (
+                    controlnet_image
+                    .permute(2, 0, 1)
+                    .unsqueeze(0)
+                    .to(torch.bfloat16)
+                    .to(self.device)
+                )
 
         return self.forward(
             prompt,
@@ -221,6 +241,7 @@ class XFluxPipeline:
                         num_steps, seed, true_gs, ip_scale, neg_ip_scale, neg_prompt,
                         neg_image_prompt, timestep_to_start_cfg, control_type, control_weight,
                         lora_weight, local_path, lora_local_path, ip_local_path):
+        
         if controlnet_image is not None:
             controlnet_image = Image.fromarray(controlnet_image)
             if ((self.controlnet_loaded and control_type != self.control_type)
@@ -231,18 +252,30 @@ class XFluxPipeline:
                     self.set_controlnet(control_type, local_path=None,
                                         repo_id=f"xlabs-ai/flux-controlnet-{control_type}-v3",
                                         name=f"flux-{control_type}-controlnet-v3.safetensors")
+                    
+
         if lora_local_path is not None:
             self.set_lora(local_path=lora_local_path, lora_weight=lora_weight)
+
         if image_prompt is not None:
             image_prompt = Image.fromarray(image_prompt)
-            if neg_image_prompt is not None:
-                neg_image_prompt = Image.fromarray(neg_image_prompt)
-            if not self.ip_loaded:
-                if ip_local_path is not None:
-                    self.set_ip(local_path=ip_local_path)
-                else:
-                    self.set_ip(repo_id="xlabs-ai/flux-ip-adapter",
-                                name="flux-ip-adapter.safetensors")
+
+        if neg_image_prompt is not None:
+            neg_image_prompt = Image.fromarray(neg_image_prompt)
+
+        # Check if IP is already loaded or if the path has changed
+        if (image_prompt or neg_image_prompt) and (not self.ip_loaded or self.ip_loaded != ip_local_path):
+            ip_local_path = ip_local_path or "XLabs-AI/flux-ip-adapter-v2"
+            if ip_local_path.startswith("XLabs-AI/flux-ip-adapter"):
+                self.set_ip(repo_id=ip_local_path, name="ip_adapter.safetensors")
+            else:
+                self.set_ip(local_path=ip_local_path)
+        
+        if controlnet_image is None and self.controlnet_loaded: 
+            controlnet_image = Image.fromarray(np.zeros((height, width, 3), dtype=np.uint8))
+            control_weight = 0.0
+            
+
         seed = int(seed)
         if seed == -1:
             seed = torch.Generator(device="cpu").seed()
