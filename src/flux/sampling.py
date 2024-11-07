@@ -132,7 +132,7 @@ def denoise(
             image_proj=image_proj,
             ip_scale=ip_scale, 
         )
-        if i >= timestep_to_start_cfg:
+        if i >= timestep_to_start_cfg and true_gs > 1:
             neg_pred = model(
                 img=img,
                 img_ids=img_ids,
