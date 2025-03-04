@@ -74,7 +74,8 @@ class XFluxPipeline:
         self.clip_image_processor = CLIPImageProcessor()
 
         # setup image embedding projection model
-        self.improj = ImageProjModel(4096, 768, 4)
+        clip_extra_context_tokens = proj['proj.weight'].shape[0] // 4096 if 'proj.weight' in proj else 4
+        self.improj = ImageProjModel(4096, 768, clip_extra_context_tokens)
         self.improj.load_state_dict(proj)
         self.improj = self.improj.to(self.device, dtype=torch.bfloat16)
 
